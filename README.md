@@ -68,8 +68,9 @@ This project is not just about writing code; it's about shipping reliable softwa
 ### 1. AI-Assisted Development & Vibe Coding
 This dashboard was built by leveraging advanced AI coding tools to dramatically accelerate the development lifecycle. 
 - **Antigravity IDE**: The entire project was developed inside the next-generation agentic environment, Antigravity IDE.
-- **Powered by Gemini AI**: Utilizing state-of-the-art AI models to draft, refactor, and debug complex Web GIS logic.
-- **Spec-Kit**: To ensure the AI doesn't hallucinate or deviate from enterprise requirements, the project heavily utilized **Spec-Kit** (a framework for AI agents). Spec-Kit enforces rigorous Specification-Driven Development, meaning all architectures, task lists, and tests are meticulously planned and documented before the AI writes a single line of code.
+- **Powered by Claude & Gemini**: Utilizing state-of-the-art AI models—specifically **Claude Sonnet** and **Gemini 3.1 Pro High**—to draft, refactor, and debug complex Web GIS logic.
+- **Spec-Kit by GitHub**: To ensure the AI doesn't hallucinate or deviate from enterprise requirements, the project heavily utilized **Spec-Kit** (developed by GitHub). Spec-Kit enforces rigorous Specification-Driven Development, meaning all architectures, task lists, and tests are meticulously planned and documented before the AI writes a single line of code.
+- **Version Control (Git)**: Maintained structured and atomic commits throughout the AI-assisted development process to ensure code traceability and team collaboration readiness.
 
 ### 2. Test-Driven Development (TDD)
 Every core feature, service, and API endpoint is backed by automated tests.
