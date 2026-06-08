@@ -8,13 +8,9 @@
 
 **Live Production:** [https://smart-city-dashboard-gray.vercel.app/](https://smart-city-dashboard-gray.vercel.app/)
 
-A high-performance, full-stack Web GIS dashboard designed to turn complex urban data into actionable insights. Built rapidly to showcase enterprise-level architecture, advanced spatial analysis, and modern development practices.
+A high-performance, data-driven Web GIS dashboard designed to turn complex urban data into actionable insights. Built from the ground up to support enterprise-scale spatial analysis, asset management, and real-time operational monitoring.
 
-### 🚀 At a Glance
-- **🗺️ Advanced Web GIS**: High-performance vector maps (MapLibre), spatial analytics (Buffer & Intersect via PostGIS/Turf.js), and dynamic map layers (Asset POIs, Heatmaps, Choropleths).
-- **📊 Robust Dashboard**: Real-time summary cards, interactive Recharts, full CRUD operations, and complex data grids with two-way map synchronization.
-- **⚡ Modern Tech Stack**: React (Next.js 14 SSR), PostgreSQL + PostGIS, MongoDB, Redis (Caching), and Elasticsearch (Search Engine).
-- **🤖 Next-Gen Engineering**: Built via **AI-Assisted "Vibe Coding"** (powered by Claude Sonnet & Gemini 3.1 Pro High in Antigravity IDE), rigorously guided by **Spec-Driven Development (SDD)** and validated with **>90% TDD Coverage**.
+This project was developed rapidly using an **AI-Assisted Development / Vibe Coding** approach, combined with rigorous **Spec-Driven Development (SDD)** and **Test-Driven Development (TDD)** to ensure production-level stability under tight timelines.
 
 ---
 
