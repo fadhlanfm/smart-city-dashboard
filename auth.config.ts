@@ -3,10 +3,11 @@ import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 
 export const authConfig = {
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'fallback_secret_for_development_only_12345',
   providers: [
     Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      clientId: process.env.AUTH_GOOGLE_ID || 'dummy_client_id',
+      clientSecret: process.env.AUTH_GOOGLE_SECRET || 'dummy_client_secret',
     }),
     Credentials({
       name: 'Dummy Account',
