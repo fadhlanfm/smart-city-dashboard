@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.next/
+.next/standalone/
+.next/static/
+coverage/
+*.log
+.env*
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/

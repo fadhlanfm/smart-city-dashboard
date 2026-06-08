@@ -1,0 +1,57 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
+}
+
+enum AssetType {
+  ROAD
+  UTILITY
+  PARK
+  FACILITY
+  POI
+}
+
+enum AssetStatus {
+  ACTIVE
+  MAINTENANCE
+  DECOMMISSIONED
+}
+
+model District {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  code            String   @unique
+  geometry        Unsupported("geometry")
+  totalAssets     Int      @default(0)
+  activeIncidents Int      @default(0)
+  coverageScore   Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  assets          Asset[]
+}
+
+model Asset {
+  id         String   @id @default(cuid())
+  name       String
+  type       AssetType
+  status     AssetStatus @default(ACTIVE)
+  districtId String
+  district   District @relation(fields: [districtId], references: [id])
+  geometry   Unsupported("geometry")
+  address    String?
+  tags       String[] @default([])
+  attributes Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([districtId])
+  @@index([status])
+  @@index([type])
+  @@index([status, type])
+}
