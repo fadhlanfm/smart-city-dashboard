@@ -21,7 +21,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <h3 className="text-xl font-semibold">Advanced Web GIS</h3>
-                <p className="text-sm text-slate-400">High-performance vector maps (MapLibre), spatial analytics (Buffer & Intersect via PostGIS/Turf.js), and dynamic layers.</p>
+                <p className="text-sm text-slate-400">High-performance vector maps featuring <strong>Asset POIs</strong>, <strong>Detail POI Modals</strong> (with images & PDF), <strong>Incident Heatmaps</strong>, and <strong>District Choropleths</strong>.</p>
               </div>
             </div>
 
@@ -30,8 +30,8 @@ export default function LoginPage() {
                 <BarChart3 className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">Robust Dashboard</h3>
-                <p className="text-sm text-slate-400">Real-time summary cards, interactive Recharts, full CRUD operations, and complex data grids with two-way map synchronization.</p>
+                <h3 className="text-xl font-semibold">Spatial Query & Dashboard</h3>
+                <p className="text-sm text-slate-400">Real-time <strong>Spatial Analytics</strong> (Buffer & Intersect via PostGIS/Turf.js), interactive Recharts, and complex grids with two-way map synchronization.</p>
               </div>
             </div>
 
@@ -40,8 +40,8 @@ export default function LoginPage() {
                 <Layers className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">Modern Tech Stack</h3>
-                <p className="text-sm text-slate-400">React (Next.js 14 SSR), PostgreSQL + PostGIS, MongoDB, Redis (Caching), and Elasticsearch (Search Engine).</p>
+                <h3 className="text-xl font-semibold">Enterprise Operations</h3>
+                <p className="text-sm text-slate-400">Full CRUD, instant Elasticsearch, and comprehensive data extraction including <strong>CSV, PDF, and GeoJSON Export</strong>.</p>
               </div>
             </div>
 
