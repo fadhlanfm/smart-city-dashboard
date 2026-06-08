@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { SearchResult } from '@/types';
-import { handleSignOut } from '@/lib/actions/auth.actions';
+import { signOut } from 'next-auth/react';
 
 export function Header() {
   const pathname = usePathname();
@@ -129,11 +129,9 @@ export function Header() {
         >
           Tutorial
         </Button>
-        <form action={handleSignOut}>
-          <Button variant="outline" size="sm" type="submit" className="font-semibold">
-            Logout
-          </Button>
-        </form>
+        <Button variant="outline" size="sm" onClick={() => signOut()} className="font-semibold">
+          Logout
+        </Button>
       </div>
     </header>
   );
