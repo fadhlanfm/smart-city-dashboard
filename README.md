@@ -14,30 +14,38 @@ This project was developed rapidly using an **AI-Assisted Development / Vibe Cod
 
 ---
 
-## ✨ Core Features
+## ✨ Complete Feature Showcase
 
-Aligning with enterprise dashboard requirements, this application delivers:
+This application is packed with enterprise-grade features, seamlessly integrating a robust data dashboard with advanced Web GIS capabilities.
 
-- 📊 **Data Visualization**: Rich visualizations including summary cards, interactive charts (Recharts), and tabular data views.
-- 🔍 **Advanced Filtering & Search**: Instant full-text search powered by **Elasticsearch** and complex multi-parameter data filtering.
-- 📑 **Data Detail & Documentation**: Comprehensive modal views for asset details, including supporting photos, histories, and structured metadata.
-- 📥 **Data Export**: Seamless export capabilities for reports (PDF) and raw data (CSV) directly from the dashboard.
-- 🚀 **Performance Optimized**: Data fetching is cached using **Redis** to ensure sub-second load times even with massive datasets.
-- 🤖 **Interactive Guided Tour**: A built-in user onboarding experience (react-joyride) to guide users through the dashboard's features.
+### 🗺️ Advanced Web GIS & MapLibre Capabilities
+- **High-Performance Vector Maps**: Powered by **MapLibre GL JS** and MapTiler, ensuring buttery-smooth panning/zooming even with thousands of points.
+- **Dynamic Basemaps**: Easily toggle between **Streets** and **Satellite** views depending on operational needs.
+- **Interactive Map Layers**: A dedicated layer control panel allows users to toggle:
+  - **Asset POIs**: Point markers clustered dynamically for performance.
+  - **Incident Heatmap**: Visual density of reported incidents across the city.
+  - **District Choropleth**: Color-coded polygons showing asset density by district.
+- **Spatial Analytics (PostGIS & Turf.js)**:
+  - **Buffer Analysis**: Select an asset and instantly draw a dynamic radius (e.g., 500m) to analyze the impact area.
+  - **Intersect Operations**: Analyze and highlight assets that fall within specific boundaries or geometric intersections.
+- **Interactive Point Selection**: Clicking an Asset POI on the map triggers a fly-to animation and opens a rich detail modal containing images, PDF reports, and historical data.
 
----
+### 📊 Dashboard & Data Visualization
+- **Real-Time Summary Cards**: Top-level metric cards displaying Total Assets, Active Incidents, and System Health.
+- **Interactive Charts (Recharts)**:
+  - **Bar Charts**: Visualizing the distribution of assets by District.
+  - **Pie / Donut Charts**: Showing the breakdown of assets by Type and Operational Status.
+- **Data Tables with Pagination**: High-performance tabular data views featuring built-in pagination, allowing users to browse massive datasets smoothly.
+- **Two-Way Synchronization**: True interactivity—clicking a map marker filters the table and charts, while clicking a row in the table automatically flies the map to the exact coordinates.
 
-## 🌍 Advanced Web GIS Capabilities
-
-The core of this application is a powerful map engine built to handle complex spatial operations seamlessly in the browser.
-
-- 🗺️ **High-Performance Vector Maps (MapLibre GL JS)**: Utilizes WebGL-accelerated vector tiles for buttery-smooth panning and zooming. Features include **3D Buildings**, dynamic terrain, and custom map styles (via MapTiler).
-- 📍 **Dynamic Thematic Mapping**: Assets are rendered dynamically with custom iconography and color-coding based on their real-time status and type. Features advanced point clustering for handling thousands of markers without performance drops.
-- 🛠️ **Geospatial Analysis Tools (PostGIS & Turf.js)**:
-  - **Buffer Analysis**: Users can select a point and generate a dynamic radius (buffer) to visualize the impact area or find neighboring assets within a specific distance.
-  - **Intersect Operations**: Automatically calculates and highlights assets that fall within specific boundaries or geometric intersections.
-- 🔄 **Two-Way Synchronization**: True dashboard interactivity where the map and data tables "talk" to each other. Clicking an asset on the map updates the detail panels and charts; clicking a row in the table automatically flies the map to the asset's exact coordinates.
-- 📐 **Spatial Filtering**: Users can filter the entire dashboard dataset simply by panning the map to view data specific to the current viewport (Bounding Box / BBOX filtering).
+### 🛠️ Core Application Operations
+- **Advanced Search & Filtering**: Instant full-text search (powered by **Elasticsearch**) and complex multi-parameter data filtering (by Type, Status, District).
+- **Full CRUD Operations**: Complete capabilities to **Add**, **Edit**, and **Delete** data seamlessly from the UI with real-time database updates.
+- **Comprehensive Data Export**:
+  - **PDF Reports**: Auto-generate beautiful PDF documents complete with asset images and structured data.
+  - **CSV Export**: Download raw tabular data for spreadsheet analysis.
+  - **GeoJSON Export**: Download spatial data directly for use in standard GIS software (like QGIS/ArcGIS).
+- **Interactive Guided Tour (Walkthrough)**: A built-in user onboarding experience (using `react-joyride`) that takes new users on a step-by-step tour of the dashboard's features.
 
 ---
 
