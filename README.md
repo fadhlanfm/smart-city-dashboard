@@ -65,8 +65,11 @@ Designed for scalability, this project utilizes a modern Fullstack architecture:
 
 This project is not just about writing code; it's about shipping reliable software efficiently.
 
-### 1. AI-Assisted Development ("Vibe Coding")
-Built by leveraging advanced AI coding tools to accelerate the development lifecycle. From initial architecture planning to component generation, AI was utilized to draft, refactor, and debug code, proving the ability to adapt to dynamic requirements and tight project timelines.
+### 1. AI-Assisted Development & Vibe Coding
+This dashboard was built by leveraging advanced AI coding tools to dramatically accelerate the development lifecycle. 
+- **Antigravity IDE**: The entire project was developed inside the next-generation agentic environment, Antigravity IDE.
+- **Powered by Gemini AI**: Utilizing state-of-the-art AI models to draft, refactor, and debug complex Web GIS logic.
+- **Spec-Kit**: To ensure the AI doesn't hallucinate or deviate from enterprise requirements, the project heavily utilized **Spec-Kit** (a framework for AI agents). Spec-Kit enforces rigorous Specification-Driven Development, meaning all architectures, task lists, and tests are meticulously planned and documented before the AI writes a single line of code.
 
 ### 2. Test-Driven Development (TDD)
 Every core feature, service, and API endpoint is backed by automated tests.
