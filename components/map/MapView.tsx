@@ -58,6 +58,7 @@ export function MapView() {
   const [assets, setAssets] = useState<GeoJSONFeatureCollection | null>(null);
   const [incidents, setIncidents] = useState<GeoJSONFeatureCollection | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   useEffect(() => {
     setMapRef(mapRef.current);
@@ -74,7 +75,7 @@ export function MapView() {
 
   // Handle URL parameter selection
   useEffect(() => {
-    if (urlAssetId && assets && assets.features) {
+    if (isMapLoaded && urlAssetId && assets && assets.features) {
       selectAsset(urlAssetId);
       
       const feature = (assets.features as any[]).find(f => f.properties.id === urlAssetId);
@@ -86,7 +87,7 @@ export function MapView() {
         }, 50);
       }
     }
-  }, [urlAssetId, assets, selectAsset]);
+  }, [isMapLoaded, urlAssetId, assets, selectAsset]);
 
   const choroplethLayer: FillLayerSpecification = {
     id: 'district-choropleth',
@@ -219,6 +220,7 @@ export function MapView() {
         mapStyle={activeBasemap === 'vector' ? VECTOR_STYLE : RASTER_STYLE}
         interactiveLayerIds={spatialMode === 'buffer' || layerVisibility.poi ? ['asset-poi'] : []}
         onClick={onClick}
+        onLoad={() => setIsMapLoaded(true)}
         cursor={cursorType}
       >
         {districts && (
