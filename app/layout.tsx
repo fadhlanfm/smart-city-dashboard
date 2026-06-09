@@ -6,6 +6,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 import { Toaster } from '@/components/ui/sonner';
 import NextTopLoader from 'nextjs-toploader';
+import { Analytics } from '@vercel/analytics/react';
 
 export const metadata: Metadata = {
   title: 'Smart City Dashboard',
@@ -24,6 +25,7 @@ export default function RootLayout({
         <NextTopLoader color="#2563eb" showSpinner={false} />
         {children}
         <Toaster richColors />
+        <Analytics />
       </body>
     </html>
   );
