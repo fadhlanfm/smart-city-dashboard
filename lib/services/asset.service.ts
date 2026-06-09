@@ -111,31 +111,59 @@ export async function getAssetDetail(id: string) {
 
 export async function createAsset(data: CreateAssetDTO) {
   const { id, name, type, status, districtId, lon, lat, tags } = data;
+  const { mockAssets, mockDistricts } = await import('@/lib/mock-data');
+  const districtName = mockDistricts.find(d => d.id === districtId)?.name || 'Mock District';
   
-  // Mock successful creation
-  return {
+  const newAsset = {
     id, name, type, status, districtId, tags: tags || [],
+    districtName,
+    location: { type: 'Point', coordinates: [lon, lat] },
     geometry: { type: 'Point', coordinates: [lon, lat] },
-    district: { id: districtId, name: 'Mock District' },
+    district: { id: districtId, name: districtName },
     createdAt: new Date(),
     updatedAt: new Date()
   };
+
+  // Mutate mock array to show in table
+  mockAssets.unshift(newAsset);
+
+  return newAsset;
 }
 
 export async function updateAsset(id: string, data: UpdateAssetDTO) {
   const { name, type, status, districtId, lon, lat, tags } = data;
+  const { mockAssets, mockDistricts } = await import('@/lib/mock-data');
   
-  // Mock successful update
+  const idx = mockAssets.findIndex(a => a.id === id);
+  if (idx !== -1) {
+    if (name) mockAssets[idx].name = name;
+    if (type) mockAssets[idx].type = type;
+    if (status) mockAssets[idx].status = status;
+    if (districtId) {
+      mockAssets[idx].districtId = districtId;
+      mockAssets[idx].districtName = mockDistricts.find(d => d.id === districtId)?.name || 'Mock District';
+    }
+    if (lon !== undefined && lat !== undefined) {
+      mockAssets[idx].location = { type: 'Point', coordinates: [lon, lat] };
+    }
+    mockAssets[idx].updatedAt = new Date();
+  }
+
+  const districtName = mockDistricts.find(d => d.id === districtId)?.name || 'Mock District';
   return {
     id, name, type, status, districtId, tags: tags || [],
     geometry: lon !== undefined ? { type: 'Point', coordinates: [lon, lat] } : null,
-    district: { id: districtId, name: 'Mock District' },
+    district: { id: districtId, name: districtName },
     createdAt: new Date(),
     updatedAt: new Date()
   };
 }
 
 export async function deleteAsset(id: string) {
-  // Mock successful deletion
+  const { mockAssets } = await import('@/lib/mock-data');
+  const idx = mockAssets.findIndex(a => a.id === id);
+  if (idx !== -1) {
+    mockAssets.splice(idx, 1);
+  }
   return { success: true };
 }
