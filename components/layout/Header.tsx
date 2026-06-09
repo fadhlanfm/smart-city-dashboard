@@ -18,6 +18,7 @@ export function Header() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Debounce logic
   useEffect(() => {
@@ -159,8 +160,18 @@ export function Header() {
         >
           Tutorial
         </Button>
-        <Button variant="outline" size="sm" onClick={() => signOut()} className="font-semibold">
-          Logout
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={async () => {
+            setIsLoggingOut(true);
+            await signOut();
+          }} 
+          className="font-semibold"
+          disabled={isLoggingOut}
+        >
+          {isLoggingOut ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isLoggingOut ? 'Logging out...' : 'Logout'}
         </Button>
       </div>
     </header>
