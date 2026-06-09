@@ -69,7 +69,7 @@ export default function LoginPage() {
             <form
               action={async () => {
                 'use server';
-                await signIn('google');
+                await signIn('google', { redirectTo: '/' });
               }}
             >
               <button className="inline-flex w-full items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -107,17 +107,7 @@ export default function LoginPage() {
             <form
               action={async () => {
                 'use server';
-                try {
-                  console.log('Attempting dummy login...');
-                  await signIn('credentials');
-                } catch (error) {
-                  // Next.js uses errors to handle redirects. If it's a redirect error, throw it.
-                  if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
-                    throw error;
-                  }
-                  console.error('Dummy Login Error:', error);
-                  throw error;
-                }
+                await signIn('credentials', { redirectTo: '/' });
               }}
             >
               <button className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
