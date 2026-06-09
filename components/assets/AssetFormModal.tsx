@@ -124,7 +124,24 @@ export function AssetFormModal({ isOpen, onClose, asset, onSuccess }: AssetFormM
         })
       });
 
-      if (!res.ok) throw new Error('Failed to save asset');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save asset');
+      
+      // Store locally for smoke and mirrors UI update across serverless boundary
+      if (data.asset) {
+        try {
+          const existingStr = localStorage.getItem('mock_new_assets');
+          const existing = existingStr ? JSON.parse(existingStr) : [];
+          if (asset) {
+            const idx = existing.findIndex((a: any) => a.id === asset.id);
+            if (idx >= 0) existing[idx] = data.asset;
+            else existing.unshift(data.asset);
+          } else {
+            existing.unshift(data.asset);
+          }
+          localStorage.setItem('mock_new_assets', JSON.stringify(existing));
+        } catch (e) {}
+      }
       
       toast.success(asset ? 'Asset updated successfully' : 'Asset created successfully');
       onSuccess();

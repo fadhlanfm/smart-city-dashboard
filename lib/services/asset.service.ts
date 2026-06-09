@@ -5,7 +5,7 @@ import { makeCacheKey } from '../utils/cache-key';
 import { FilterParamsDTO } from '../validators/filter.schema';
 import { BaseResponse, ExtendedAsset, CreateAssetDTO, UpdateAssetDTO, IncidentDocument } from '../types';
 
-export async function getFilteredAssets(filters: FilterParamsDTO): Promise<BaseResponse<ExtendedAsset[]>> {
+async function real_getFilteredAssets(filters: FilterParamsDTO): Promise<BaseResponse<ExtendedAsset[]>> {
   const cacheKey = makeCacheKey('assets:filtered', filters as Record<string, unknown>);
   const cached = await getCache<BaseResponse<ExtendedAsset[]>>(cacheKey);
   if (cached) return cached;
@@ -67,7 +67,7 @@ export async function getFilteredAssets(filters: FilterParamsDTO): Promise<BaseR
   return result;
 }
 
-export async function getAssetSummary(filters: FilterParamsDTO) {
+async function real_getAssetSummary(filters: FilterParamsDTO) {
   const cacheKey = makeCacheKey('assets:summary', filters as Record<string, unknown>);
   const cached = await getCache<{total: number, byType: {type: string, count: number}[], byStatus: {status: string, count: number}[]}>(cacheKey);
   if (cached) return cached;
@@ -100,7 +100,7 @@ export async function getAssetSummary(filters: FilterParamsDTO) {
   return result;
 }
 
-export async function getAssetGeoJSON(filters: FilterParamsDTO) {
+async function real_getAssetGeoJSON(filters: FilterParamsDTO) {
   const cacheKey = makeCacheKey('assets:geojson', filters as Record<string, unknown>);
   const cached = await getCache<any>(cacheKey);
   if (cached) return cached;
@@ -146,7 +146,7 @@ export async function getAssetGeoJSON(filters: FilterParamsDTO) {
   return featureCollection;
 }
 
-export async function getAssetDetail(id: string) {
+async function real_getAssetDetail(id: string) {
   const cacheKey = makeCacheKey('asset:detail', { id });
   const cached = await getCache<ExtendedAsset>(cacheKey);
   if (cached) return cached;
@@ -199,7 +199,7 @@ export async function getAssetDetail(id: string) {
   return result as ExtendedAsset;
 }
 
-export async function createAsset(data: CreateAssetDTO) {
+async function real_createAsset(data: CreateAssetDTO) {
   const { id, name, type, status, districtId, lon, lat, tags } = data;
   
   const tagsArray = tags || [];
@@ -261,7 +261,7 @@ export async function createAsset(data: CreateAssetDTO) {
   return asset;
 }
 
-export async function updateAsset(id: string, data: UpdateAssetDTO) {
+async function real_updateAsset(id: string, data: UpdateAssetDTO) {
   const { name, type, status, districtId, lon, lat, tags } = data;
 
   // 1. Update Postgres (Scalars)
@@ -311,7 +311,7 @@ export async function updateAsset(id: string, data: UpdateAssetDTO) {
   return asset;
 }
 
-export async function deleteAsset(id: string) {
+async function real_deleteAsset(id: string) {
   // 1. Delete from Postgres
   await prisma.asset.delete({ where: { id } });
 
@@ -341,4 +341,107 @@ export async function deleteAsset(id: string) {
   }
 
   return { success: true };
+}
+
+
+// ============================================================================
+// GRACEFUL DEGRADATION WRAPPERS (Real DB -> Mock Fallback)
+// ============================================================================
+
+export async function getFilteredAssets(filters: FilterParamsDTO): Promise<BaseResponse<ExtendedAsset[]>> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DB === 'true') {
+    const { mockService } = await import('./asset.mock');
+    return mockService.getFilteredAssets(filters);
+  }
+  try {
+    return await real_getFilteredAssets(filters);
+  } catch (err) {
+    console.error("DB Error (getFilteredAssets), falling back to mock", err);
+    const { mockService } = await import('./asset.mock');
+    return mockService.getFilteredAssets(filters);
+  }
+}
+
+export async function getAssetSummary(filters: FilterParamsDTO) {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DB === 'true') {
+    const { mockService } = await import('./asset.mock');
+    return mockService.getAssetSummary(filters);
+  }
+  try {
+    return await real_getAssetSummary(filters);
+  } catch (err) {
+    console.error("DB Error (getAssetSummary), falling back to mock", err);
+    const { mockService } = await import('./asset.mock');
+    return mockService.getAssetSummary(filters);
+  }
+}
+
+export async function getAssetGeoJSON(filters: FilterParamsDTO) {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DB === 'true') {
+    const { mockService } = await import('./asset.mock');
+    return mockService.getAssetGeoJSON(filters);
+  }
+  try {
+    return await real_getAssetGeoJSON(filters);
+  } catch (err) {
+    console.error("DB Error (getAssetGeoJSON), falling back to mock", err);
+    const { mockService } = await import('./asset.mock');
+    return mockService.getAssetGeoJSON(filters);
+  }
+}
+
+export async function getAssetDetail(id: string) {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DB === 'true') {
+    const { mockService } = await import('./asset.mock');
+    return mockService.getAssetDetail(id);
+  }
+  try {
+    return await real_getAssetDetail(id);
+  } catch (err) {
+    console.error("DB Error (getAssetDetail), falling back to mock", err);
+    const { mockService } = await import('./asset.mock');
+    return mockService.getAssetDetail(id);
+  }
+}
+
+export async function createAsset(data: CreateAssetDTO) {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DB === 'true') {
+    const { mockService } = await import('./asset.mock');
+    return mockService.createAsset(data);
+  }
+  try {
+    return await real_createAsset(data);
+  } catch (err) {
+    console.error("DB Error (createAsset), falling back to mock", err);
+    const { mockService } = await import('./asset.mock');
+    return mockService.createAsset(data);
+  }
+}
+
+export async function updateAsset(id: string, data: UpdateAssetDTO) {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DB === 'true') {
+    const { mockService } = await import('./asset.mock');
+    return mockService.updateAsset(id, data);
+  }
+  try {
+    return await real_updateAsset(id, data);
+  } catch (err) {
+    console.error("DB Error (updateAsset), falling back to mock", err);
+    const { mockService } = await import('./asset.mock');
+    return mockService.updateAsset(id, data);
+  }
+}
+
+export async function deleteAsset(id: string) {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DB === 'true') {
+    const { mockService } = await import('./asset.mock');
+    return mockService.deleteAsset(id);
+  }
+  try {
+    return await real_deleteAsset(id);
+  } catch (err) {
+    console.error("DB Error (deleteAsset), falling back to mock", err);
+    const { mockService } = await import('./asset.mock');
+    return mockService.deleteAsset(id);
+  }
 }
