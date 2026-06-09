@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { DataTable } from '@/components/dashboard/DataTable';
 import { AssetRowActions } from './AssetRowActions';
 import { ExtendedAsset } from '@/lib/types';
@@ -13,25 +13,7 @@ interface AssetTableWrapperProps {
 
 export function AssetTableWrapper({ data, meta }: AssetTableWrapperProps) {
   type TableAsset = ExtendedAsset & Record<string, unknown>;
-  const [tableData, setTableData] = useState<TableAsset[]>(data as TableAsset[]);
-
-  useEffect(() => {
-    try {
-      const localStr = localStorage.getItem('mock_new_assets');
-      const deletedStr = localStorage.getItem('mock_deleted_assets');
-      
-      const localAssets = localStr ? JSON.parse(localStr) : [];
-      const deletedAssets = deletedStr ? JSON.parse(deletedStr) : [];
-      
-      const combined = [...localAssets, ...(data as TableAsset[])]
-        .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
-        .filter(v => !deletedAssets.includes(v.id));
-        
-      setTableData(combined);
-    } catch (e) {
-      setTableData(data as TableAsset[]);
-    }
-  }, [data]);
+  const tableData = data as TableAsset[];
 
   const columns = [
     { accessorKey: 'id', header: 'ID' },

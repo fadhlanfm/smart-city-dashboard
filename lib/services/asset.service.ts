@@ -6,30 +6,51 @@ import { FilterParamsDTO } from '../validators/filter.schema';
 import { BaseResponse, ExtendedAsset, CreateAssetDTO, UpdateAssetDTO, IncidentDocument } from '../types';
 
 export async function getFilteredAssets(filters: FilterParamsDTO): Promise<BaseResponse<ExtendedAsset[]>> {
-  const { getMockAssets } = await import('@/lib/mock-data');
-  let filtered = getMockAssets();
-  
-  if (filters.districtId) filtered = filtered.filter(a => a.districtId === filters.districtId);
-  if (filters.type) filtered = filtered.filter(a => a.type === filters.type);
-  if (filters.status) filtered = filtered.filter(a => a.status === filters.status);
+  const cacheKey = makeCacheKey('assets:filtered', filters as Record<string, unknown>);
+  const cached = await getCache<BaseResponse<ExtendedAsset[]>>(cacheKey);
+  if (cached) return cached;
 
-  const total = filtered.length;
-  
-  // Sorting (mocking basic sorting)
-  filtered = filtered.sort((a, b) => {
-    const valA = a[filters.sort] || a.createdAt;
-    const valB = b[filters.sort] || b.createdAt;
-    if (filters.order === 'asc') return valA > valB ? 1 : -1;
-    return valA < valB ? 1 : -1;
-  });
+  const where: Prisma.AssetWhereInput = {};
+  if (filters.districtId) where.districtId = filters.districtId;
+  if (filters.type) where.type = filters.type;
+  if (filters.status) where.status = filters.status;
+  if (filters.dateFrom || filters.dateTo) {
+    where.updatedAt = {};
+    if (filters.dateFrom) where.updatedAt.gte = new Date(filters.dateFrom);
+    if (filters.dateTo) where.updatedAt.lte = new Date(filters.dateTo);
+  }
 
   const skip = (filters.page - 1) * filters.pageSize;
-  const paginated = filtered.slice(skip, skip + filters.pageSize);
+  
+  // We use queryRaw to get ST_AsGeoJSON because prisma doesn't support PostGIS directly in findMany selects yet
+  // However, building a dynamic queryRaw is risky for SQL injection.
+  // Instead, we fetch IDs using Prisma findMany, then fetch geometries.
+  
+  const [total, assets] = await Promise.all([
+    prisma.asset.count({ where }),
+    prisma.asset.findMany({
+      where,
+      orderBy: { [filters.sort]: filters.order },
+      skip,
+      take: filters.pageSize,
+      include: { district: { select: { name: true } } },
+    }),
+  ]);
 
-  const data = paginated.map(a => ({
+  if (assets.length === 0) {
+    const emptyResult = { data: [], meta: { page: filters.page, pageSize: filters.pageSize, total: 0, totalPages: 0 } };
+    await setCache(cacheKey, emptyResult, 30);
+    return emptyResult;
+  }
+
+  const geometries = await prisma.$queryRaw<{ geometry: string, id: string }[]>`
+    SELECT id, ST_AsGeoJSON(geometry)::json as geometry FROM "Asset" WHERE id IN (${Prisma.join(assets.map(a => a.id))})
+  `;
+  const geoMap = new Map(geometries.map(g => [g.id, g.geometry]));
+
+  const data = assets.map(a => ({
     ...a,
-    geometry: a.location,
-    district: { name: a.districtName }
+    geometry: geoMap.get(a.id) || null,
   })) as ExtendedAsset[];
 
   const result = {
@@ -42,28 +63,75 @@ export async function getFilteredAssets(filters: FilterParamsDTO): Promise<BaseR
     },
   };
 
+  await setCache(cacheKey, result, 30);
   return result;
 }
 
 export async function getAssetSummary(filters: FilterParamsDTO) {
-  const { getMockSummary } = await import('@/lib/mock-data');
-  return getMockSummary(filters);
+  const cacheKey = makeCacheKey('assets:summary', filters as Record<string, unknown>);
+  const cached = await getCache<{total: number, byType: {type: string, count: number}[], byStatus: {status: string, count: number}[]}>(cacheKey);
+  if (cached) return cached;
+
+  const where: Prisma.AssetWhereInput = {};
+  if (filters.districtId) where.districtId = filters.districtId;
+  // Intentionally omit type/status filters for the summary aggregation itself
+
+  const [total, byType, byStatus] = await Promise.all([
+    prisma.asset.count({ where }),
+    prisma.asset.groupBy({
+      by: ['type'],
+      where,
+      _count: true,
+    }),
+    prisma.asset.groupBy({
+      by: ['status'],
+      where,
+      _count: true,
+    }),
+  ]);
+
+  const result = {
+    total,
+    byType: byType.map(t => ({ type: t.type, count: t._count })),
+    byStatus: byStatus.map(s => ({ status: s.status, count: s._count })),
+  };
+
+  await setCache(cacheKey, result, 60);
+  return result;
 }
 
 export async function getAssetGeoJSON(filters: FilterParamsDTO) {
-  const { getMockAssets } = await import('@/lib/mock-data');
-  let filtered = getMockAssets();
-  
-  // Optional: Apply filters to mock data if needed
-  if (filters.districtId) filtered = filtered.filter(a => a.districtId === filters.districtId);
-  if (filters.type) filtered = filtered.filter(a => a.type === filters.type);
-  if (filters.status) filtered = filtered.filter(a => a.status === filters.status);
+  const cacheKey = makeCacheKey('assets:geojson', filters as Record<string, unknown>);
+  const cached = await getCache<any>(cacheKey);
+  if (cached) return cached;
+
+  const where: any = {};
+  if (filters.districtId) where.districtId = filters.districtId;
+  if (filters.type) where.type = filters.type;
+  if (filters.status) where.status = filters.status;
+
+  const assets = await prisma.asset.findMany({
+    where,
+    select: { id: true, name: true, type: true, status: true, districtId: true }
+  });
+
+  if (assets.length === 0) {
+    const emptyResult = { type: 'FeatureCollection', features: [] };
+    await setCache(cacheKey, emptyResult, 60);
+    return emptyResult;
+  }
+
+  const assetIds = assets.map(a => a.id);
+  const geometries: any[] = await prisma.$queryRaw`
+    SELECT id, ST_AsGeoJSON(geometry)::json as geometry FROM "Asset" WHERE id IN (${Prisma.join(assetIds)})
+  `;
+  const geoMap = new Map(geometries.map(g => [g.id, g.geometry]));
 
   const featureCollection = {
     type: 'FeatureCollection',
-    features: filtered.map(a => ({
+    features: assets.map(a => ({
       type: 'Feature',
-      geometry: a.location,
+      geometry: geoMap.get(a.id),
       properties: {
         id: a.id,
         name: a.name,
@@ -74,103 +142,203 @@ export async function getAssetGeoJSON(filters: FilterParamsDTO) {
     })),
   };
 
+  await setCache(cacheKey, featureCollection, 60);
   return featureCollection;
 }
 
 export async function getAssetDetail(id: string) {
-  const { getMockAssets } = await import('@/lib/mock-data');
-  const asset = getMockAssets().find(a => a.id === id);
-  
+  const cacheKey = makeCacheKey('asset:detail', { id });
+  const cached = await getCache<ExtendedAsset>(cacheKey);
+  if (cached) return cached;
+
+  const asset = await prisma.asset.findUnique({
+    where: { id },
+    include: {
+      district: {
+        select: { id: true, name: true, code: true }
+      }
+    }
+  });
+
   if (!asset) return null;
+
+  const geometries = await prisma.$queryRaw<{ geometry: string }[]>`
+    SELECT ST_AsGeoJSON(geometry)::json as geometry FROM "Asset" WHERE id = ${id}
+  `;
+
+  // Dynamically import Mongoose model to avoid circular/top-level issues if any
+  const { Incident, connectMongoDB } = require('@/lib/db/mongoose');
+  await connectMongoDB();
+
+  // Fetch recent incidents linked to this asset from MongoDB
+  const recentIncidents = await Incident.find({ assetId: id })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .lean();
+
+  const { AssetDocument } = require('@/lib/db/mongoose');
+  const doc = await AssetDocument.findOne({ assetId: id }).lean();
 
   const result = {
     ...asset,
-    geometry: asset.location,
-    photos: [
-      `https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800&sig=${id}1`,
-      `https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800&sig=${id}2`,
-      `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800&sig=${id}3`
-    ],
-    documents: [
-      { title: 'Standard Maintenance Protocol', url: '#', fileType: 'PDF', uploadedAt: new Date(asset.createdAt).toISOString() },
-      { title: 'Technical Specifications', url: '#', fileType: 'PDF', uploadedAt: new Date(asset.createdAt).toISOString() },
-      { title: 'Installation Diagram', url: '#', fileType: 'PNG', uploadedAt: new Date(asset.createdAt).toISOString() }
-    ],
-    notes: ['Asset has been verified by the city inspection team.', 'Scheduled for routine maintenance next quarter.'],
-    recentIncidents: [],
-    district: {
-      id: asset.districtId,
-      name: asset.districtName,
-      code: 'BDG'
-    }
+    geometry: geometries[0]?.geometry || null,
+    photos: doc?.photos || [],
+    documents: doc?.documents || [],
+    notes: doc?.notes || [],
+    recentIncidents: recentIncidents.map((i: any) => ({
+      id: i._id.toString(),
+      type: i.type,
+      severity: i.severity,
+      status: i.status,
+      description: i.description,
+      createdAt: i.createdAt
+    }))
   };
 
-  return result as unknown as ExtendedAsset;
+  await setCache(cacheKey, result, 30);
+  return result as ExtendedAsset;
 }
 
 export async function createAsset(data: CreateAssetDTO) {
   const { id, name, type, status, districtId, lon, lat, tags } = data;
-  const { getMockAssets, saveMockAssets, mockDistricts } = await import('@/lib/mock-data');
   
-  const mockAssets = getMockAssets();
-  const districtName = mockDistricts.find(d => d.id === districtId)?.name || 'Mock District';
-  
-  const newAsset = {
-    id, name, type, status, districtId, tags: tags || [],
-    districtName,
-    location: { type: 'Point', coordinates: [lon, lat] },
-    geometry: { type: 'Point', coordinates: [lon, lat] },
-    district: { id: districtId, name: districtName },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+  const tagsArray = tags || [];
+  const tagsPgArray = "{" + tagsArray.map(t => '"' + t.replace(/"/g, '\\"') + '"').join(',') + "}";
 
-  mockAssets.unshift(newAsset);
-  saveMockAssets(mockAssets);
+  // 1. Insert into Postgres using PostGIS
+  await prisma.$executeRaw`
+    INSERT INTO "Asset" ("id", "name", "type", "status", "districtId", "geometry", "tags", "createdAt", "updatedAt")
+    VALUES (
+      ${id}, ${name}, ${type}::"AssetType", ${status}::"AssetStatus", ${districtId},
+      ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326),
+      ${tagsPgArray}::text[],
+      NOW(), NOW()
+    )
+  `;
 
-  return newAsset;
+  // Fetch the full asset to get the district details
+  const asset = await prisma.asset.findUnique({
+    where: { id },
+    include: { district: true }
+  });
+
+  // 2. Initialize MongoDB AssetDocument
+  const { AssetDocument, connectMongoDB } = require('@/lib/db/mongoose');
+  await connectMongoDB();
+  await AssetDocument.create({
+    assetId: id,
+    photos: [],
+    documents: [],
+    notes: ["Asset created via CRUD"]
+  });
+
+  // 3. Insert into Elasticsearch
+  const { esClient } = require('@/lib/db/elasticsearch');
+  await esClient.index({
+    index: 'smart_city_assets',
+    id: id,
+    document: {
+      name,
+      type,
+      status,
+      districtId,
+      district: asset?.district?.name || 'Unknown',
+      location: { lat, lon },
+      tags: tags || [],
+      updatedAt: new Date().toISOString()
+    }
+  });
+
+  // 4. Invalidate Redis Caches
+  const { redis } = require('@/lib/db/redis');
+  if (redis) {
+    const keys = await redis.keys('asset*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  }
+
+  return asset;
 }
 
 export async function updateAsset(id: string, data: UpdateAssetDTO) {
   const { name, type, status, districtId, lon, lat, tags } = data;
-  const { getMockAssets, saveMockAssets, mockDistricts } = await import('@/lib/mock-data');
-  
-  const mockAssets = getMockAssets();
-  const idx = mockAssets.findIndex(a => a.id === id);
-  if (idx !== -1) {
-    if (name) mockAssets[idx].name = name;
-    if (type) mockAssets[idx].type = type;
-    if (status) mockAssets[idx].status = status;
-    if (districtId) {
-      mockAssets[idx].districtId = districtId;
-      mockAssets[idx].districtName = mockDistricts.find(d => d.id === districtId)?.name || 'Mock District';
-    }
-    if (lon !== undefined && lat !== undefined) {
-      mockAssets[idx].location = { type: 'Point', coordinates: [lon, lat] };
-    }
-    if (tags) mockAssets[idx].tags = tags;
-    mockAssets[idx].updatedAt = new Date().toISOString();
+
+  // 1. Update Postgres (Scalars)
+  await prisma.asset.update({
+    where: { id },
+    data: { name, type, status, districtId, tags: tags || [] }
+  });
+
+  // 2. Update Geometry
+  if (lon !== undefined && lat !== undefined) {
+    await prisma.$executeRaw`
+      UPDATE "Asset" 
+      SET 
+        "geometry" = ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326),
+        "updatedAt" = NOW()
+      WHERE "id" = ${id}
+    `;
   }
 
-  saveMockAssets(mockAssets);
+  const asset = await prisma.asset.findUnique({
+    where: { id },
+    include: { district: true }
+  });
 
-  const districtName = mockDistricts.find(d => d.id === districtId)?.name || 'Mock District';
-  return {
-    id, name, type, status, districtId, tags: tags || [],
-    geometry: lon !== undefined ? { type: 'Point', coordinates: [lon, lat] } : null,
-    district: { id: districtId, name: districtName },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
+  // 2. Update Elasticsearch
+  const { esClient } = require('@/lib/db/elasticsearch');
+  const doc: Record<string, unknown> = { name, type, status, districtId, tags, updatedAt: new Date().toISOString() };
+  if (asset?.district?.name) doc.district = asset.district.name;
+  if (lon !== undefined && lat !== undefined) doc.location = { lat, lon };
+
+  await esClient.update({
+    index: 'smart_city_assets',
+    id: id,
+    doc: doc,
+    doc_as_upsert: true
+  });
+
+  // 3. Invalidate Redis Caches
+  const { redis } = require('@/lib/db/redis');
+  if (redis) {
+    const keys = await redis.keys('asset*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  }
+
+  return asset;
 }
 
 export async function deleteAsset(id: string) {
-  const { getMockAssets, saveMockAssets } = await import('@/lib/mock-data');
-  const mockAssets = getMockAssets();
-  const idx = mockAssets.findIndex(a => a.id === id);
-  if (idx !== -1) {
-    mockAssets.splice(idx, 1);
-    saveMockAssets(mockAssets);
+  // 1. Delete from Postgres
+  await prisma.asset.delete({ where: { id } });
+
+  // 2. Delete from MongoDB
+  const { AssetDocument, Incident, connectMongoDB } = require('@/lib/db/mongoose');
+  await connectMongoDB();
+  await AssetDocument.deleteOne({ assetId: id });
+  await Incident.deleteMany({ assetId: id });
+
+  // 3. Delete from Elasticsearch
+  const { esClient } = require('@/lib/db/elasticsearch');
+  try {
+    await esClient.delete({ index: 'smart_city_assets', id: id });
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'meta' in err && (err as Record<string, unknown>).meta && ((err as Record<string, unknown>).meta as Record<string, unknown>).statusCode !== 404) {
+      console.error('ES Delete error', err);
+    }
   }
+
+  // 4. Invalidate Redis Caches
+  const { redis } = require('@/lib/db/redis');
+  if (redis) {
+    const keys = await redis.keys('asset*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  }
+
   return { success: true };
 }
