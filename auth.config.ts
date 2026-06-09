@@ -4,6 +4,8 @@ import Credentials from 'next-auth/providers/credentials';
 
 export const authConfig = {
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'fallback_secret_for_development_only_12345',
+  trustHost: true,
+  session: { strategy: 'jwt' },
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID || 'dummy_client_id',
@@ -25,6 +27,18 @@ export const authConfig = {
     signIn: '/login',
   },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.id) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isApiRoute = nextUrl.pathname.startsWith('/api/');
