@@ -70,7 +70,7 @@ export function DataTable<T extends Record<string, unknown>>({ columns, data, me
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <div>
-            Showing {((meta.page - 1) * meta.pageSize) + 1} to {Math.min(meta.page * meta.pageSize, meta.total)} of {meta.total} results
+            Showing {((meta.page - 1) * meta.pageSize) + 1} to {Math.min(((meta.page - 1) * meta.pageSize) + data.length, meta.total)} of {meta.total} results
           </div>
           <div className="flex items-center gap-2">
             <span>Rows per page:</span>

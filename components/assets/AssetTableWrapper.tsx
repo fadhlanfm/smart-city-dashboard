@@ -86,7 +86,11 @@ export function AssetTableWrapper({ data, meta }: AssetTableWrapperProps) {
       <DataTable<TableAsset>
         columns={columns} 
         data={tableData} 
-        meta={{ ...meta, total: Math.max(0, meta.total + localOffset) }}
+        meta={{ 
+          ...meta, 
+          total: Math.max(0, meta.total + localOffset),
+          totalPages: Math.ceil(Math.max(0, meta.total + localOffset) / meta.pageSize)
+        }}
         onRowClick={(row) => {
           startTransition(() => {
             router.push(`/map?assetId=${row.id}`);
