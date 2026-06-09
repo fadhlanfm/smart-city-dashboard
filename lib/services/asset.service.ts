@@ -87,9 +87,17 @@ export async function getAssetDetail(id: string) {
   const result = {
     ...asset,
     geometry: asset.location,
-    photos: ['https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800'],
-    documents: [],
-    notes: ['Mock data notes for this asset.'],
+    photos: [
+      `https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800&sig=${id}1`,
+      `https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800&sig=${id}2`,
+      `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800&sig=${id}3`
+    ],
+    documents: [
+      { title: 'Standard Maintenance Protocol', url: '#', fileType: 'PDF', uploadedAt: new Date(asset.createdAt).toISOString() },
+      { title: 'Technical Specifications', url: '#', fileType: 'PDF', uploadedAt: new Date(asset.createdAt).toISOString() },
+      { title: 'Installation Diagram', url: '#', fileType: 'PNG', uploadedAt: new Date(asset.createdAt).toISOString() }
+    ],
+    notes: ['Asset has been verified by the city inspection team.', 'Scheduled for routine maintenance next quarter.'],
     recentIncidents: [],
     district: {
       id: asset.districtId,

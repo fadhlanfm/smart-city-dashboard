@@ -35,58 +35,34 @@ export async function GET(req: NextRequest) {
     // But wait, the export button is for the DataTable which shows ALL data filtered!
     
     // Let's modify the search logic directly here for exporting
-    const { esClient } = require('@/lib/db/elasticsearch');
-    
-    const filter: Record<string, unknown>[] = [];
-    if (params.districtId) filter.push({ term: { 'districtId.keyword': params.districtId } });
-    if (params.type) filter.push({ term: { 'type.keyword': params.type } });
-    if (params.status) filter.push({ term: { 'status.keyword': params.status } });
-    
-    let must: Record<string, unknown> = { match_all: {} };
+    const { mockAssets } = await import('@/lib/mock-data');
+    let filtered = mockAssets;
+
     if (params.q) {
-      must = {
-        multi_match: {
-          query: params.q,
-          fields: ['name^3', 'address', 'tags', 'district'],
-          fuzziness: 'AUTO',
-        }
-      };
+      const q = params.q.toLowerCase();
+      filtered = filtered.filter(a => a.name.toLowerCase().includes(q) || a.districtName.toLowerCase().includes(q));
     }
+    if (params.districtId) filtered = filtered.filter(a => a.districtId === params.districtId);
+    if (params.type) filtered = filtered.filter(a => a.type === params.type);
+    if (params.status) filtered = filtered.filter(a => a.status === params.status);
 
-    const response = await esClient.search({
-      index: 'smart_city_assets',
-      size: 10000,
-      body: {
-        query: {
-          bool: {
-            must,
-            filter,
-          },
-        },
-      },
-    });
-
-    const hits = response.hits.hits as SearchHit[];
-    const records = hits.map((hit: SearchHit) => {
-      const source = hit._source;
-      return {
-        id: hit._id,
-        name: source.name,
-        type: source.type,
-        status: source.status,
-        district: source.district,
-        districtId: source.districtId,
-        lon: source.location?.lon,
-        lat: source.location?.lat,
-      };
-    });
+    const records = filtered.map(a => ({
+      id: a.id,
+      name: a.name,
+      type: a.type,
+      status: a.status,
+      district: a.districtName,
+      districtId: a.districtId,
+      lon: a.location.coordinates[0],
+      lat: a.location.coordinates[1],
+    }));
 
     const format = params.format || 'csv';
 
     if (format === 'geojson') {
       const featureCollection = {
         type: 'FeatureCollection',
-        features: records.map((r: { id: string, name: string, type: string, status: string, district: string, lon?: number, lat?: number }) => ({
+        features: records.map((r) => ({
           type: 'Feature',
           geometry: r.lon && r.lat ? { type: 'Point', coordinates: [r.lon, r.lat] } : null,
           properties: {
