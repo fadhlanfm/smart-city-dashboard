@@ -30,7 +30,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://*.maptiler.com https://*.openstreetmap.org",
+              "connect-src 'self' https://*.maptiler.com https://*.openstreetmap.org https://basemaps.cartocdn.com",
               "worker-src blob:",
             ].join('; '),
           },
