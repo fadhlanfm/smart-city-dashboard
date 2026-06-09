@@ -41,7 +41,32 @@ export function Header() {
         const res = await fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`);
         if (res.ok) {
           const data = await res.json();
-          setResults(data.data || []);
+          let serverResults = data.data || [];
+          
+          try {
+            const localStr = localStorage.getItem('mock_new_assets');
+            const deletedStr = localStorage.getItem('mock_deleted_assets');
+            const localAssets = localStr ? JSON.parse(localStr) : [];
+            const deletedAssets = deletedStr ? JSON.parse(deletedStr) : [];
+            
+            const q = debouncedQuery.toLowerCase();
+            const localMatches = localAssets.filter((a: any) => 
+              (a.name?.toLowerCase().includes(q) || a.districtName?.toLowerCase().includes(q) || a.type?.toLowerCase().includes(q))
+              && !deletedAssets.includes(a.id)
+            ).map((a: any) => ({
+              id: a.id,
+              name: a.name,
+              type: a.type,
+              status: a.status,
+              district: a.districtName || 'Unknown'
+            }));
+            
+            serverResults = [...localMatches, ...serverResults]
+              .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i)
+              .filter(v => !deletedAssets.includes(v.id));
+          } catch(e) {}
+
+          setResults(serverResults);
           setIsOpen(true);
         }
       } catch (e) {
