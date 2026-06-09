@@ -6,51 +6,31 @@ import { FilterParamsDTO } from '../validators/filter.schema';
 import { BaseResponse, ExtendedAsset, CreateAssetDTO, UpdateAssetDTO, IncidentDocument } from '../types';
 
 export async function getFilteredAssets(filters: FilterParamsDTO): Promise<BaseResponse<ExtendedAsset[]>> {
-  const cacheKey = makeCacheKey('assets:filtered', filters as Record<string, unknown>);
-  const cached = await getCache<BaseResponse<ExtendedAsset[]>>(cacheKey);
-  if (cached) return cached;
+  const { mockAssets } = await import('@/lib/mock-data');
+  
+  let filtered = mockAssets;
+  
+  if (filters.districtId) filtered = filtered.filter(a => a.districtId === filters.districtId);
+  if (filters.type) filtered = filtered.filter(a => a.type === filters.type);
+  if (filters.status) filtered = filtered.filter(a => a.status === filters.status);
 
-  const where: Prisma.AssetWhereInput = {};
-  if (filters.districtId) where.districtId = filters.districtId;
-  if (filters.type) where.type = filters.type;
-  if (filters.status) where.status = filters.status;
-  if (filters.dateFrom || filters.dateTo) {
-    where.updatedAt = {};
-    if (filters.dateFrom) where.updatedAt.gte = new Date(filters.dateFrom);
-    if (filters.dateTo) where.updatedAt.lte = new Date(filters.dateTo);
-  }
+  const total = filtered.length;
+  
+  // Sorting (mocking basic sorting)
+  filtered = filtered.sort((a, b) => {
+    const valA = a[filters.sort] || a.createdAt;
+    const valB = b[filters.sort] || b.createdAt;
+    if (filters.order === 'asc') return valA > valB ? 1 : -1;
+    return valA < valB ? 1 : -1;
+  });
 
   const skip = (filters.page - 1) * filters.pageSize;
-  
-  // We use queryRaw to get ST_AsGeoJSON because prisma doesn't support PostGIS directly in findMany selects yet
-  // However, building a dynamic queryRaw is risky for SQL injection.
-  // Instead, we fetch IDs using Prisma findMany, then fetch geometries.
-  
-  const [total, assets] = await Promise.all([
-    prisma.asset.count({ where }),
-    prisma.asset.findMany({
-      where,
-      orderBy: { [filters.sort]: filters.order },
-      skip,
-      take: filters.pageSize,
-      include: { district: { select: { name: true } } },
-    }),
-  ]);
+  const paginated = filtered.slice(skip, skip + filters.pageSize);
 
-  if (assets.length === 0) {
-    const emptyResult = { data: [], meta: { page: filters.page, pageSize: filters.pageSize, total: 0, totalPages: 0 } };
-    await setCache(cacheKey, emptyResult, 30);
-    return emptyResult;
-  }
-
-  const geometries = await prisma.$queryRaw<{ geometry: string, id: string }[]>`
-    SELECT id, ST_AsGeoJSON(geometry)::json as geometry FROM "Asset" WHERE id IN (${Prisma.join(assets.map(a => a.id))})
-  `;
-  const geoMap = new Map(geometries.map(g => [g.id, g.geometry]));
-
-  const data = assets.map(a => ({
+  const data = paginated.map(a => ({
     ...a,
-    geometry: geoMap.get(a.id) || null,
+    geometry: a.location,
+    district: { name: a.districtName }
   })) as ExtendedAsset[];
 
   const result = {
@@ -63,41 +43,12 @@ export async function getFilteredAssets(filters: FilterParamsDTO): Promise<BaseR
     },
   };
 
-  await setCache(cacheKey, result, 30);
   return result;
 }
 
 export async function getAssetSummary(filters: FilterParamsDTO) {
-  const cacheKey = makeCacheKey('assets:summary', filters as Record<string, unknown>);
-  const cached = await getCache<{total: number, byType: {type: string, count: number}[], byStatus: {status: string, count: number}[]}>(cacheKey);
-  if (cached) return cached;
-
-  const where: Prisma.AssetWhereInput = {};
-  if (filters.districtId) where.districtId = filters.districtId;
-  // Intentionally omit type/status filters for the summary aggregation itself
-
-  const [total, byType, byStatus] = await Promise.all([
-    prisma.asset.count({ where }),
-    prisma.asset.groupBy({
-      by: ['type'],
-      where,
-      _count: true,
-    }),
-    prisma.asset.groupBy({
-      by: ['status'],
-      where,
-      _count: true,
-    }),
-  ]);
-
-  const result = {
-    total,
-    byType: byType.map(t => ({ type: t.type, count: t._count })),
-    byStatus: byStatus.map(s => ({ status: s.status, count: s._count })),
-  };
-
-  await setCache(cacheKey, result, 60);
-  return result;
+  const { getMockSummary } = await import('@/lib/mock-data');
+  return getMockSummary();
 }
 
 export async function getAssetGeoJSON(filters: FilterParamsDTO) {

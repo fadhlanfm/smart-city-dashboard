@@ -20,15 +20,13 @@ export default async function DashboardPage({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const parsedParams = filterSchema.safeParse(searchParams);
-  const filters = parsedParams.success ? parsedParams.data : { page: 1, pageSize: 10, sort: 'updatedAt', order: 'desc' as const };
+  const filters = parsedParams.success 
+    ? parsedParams.data 
+    : { page: 1, pageSize: 10, sort: 'updatedAt', order: 'desc' as const };
 
-  // Temporary mock data until database is connected
-  let assetsResponse: BaseResponse<any[]> = { 
-    data: mockAssets.slice(0, 50), // Show first 50 in table to avoid lag
-    meta: { total: mockAssets.length, page: 1, pageSize: 50, totalPages: Math.ceil(mockAssets.length/50) } 
-  };
-  let summary = getMockSummary();
-  let districts = mockDistricts;
+  const assetsResponse = await getFilteredAssets(filters);
+  const summary = await getAssetSummary(filters);
+  const districts = mockDistricts;
 
   const formattedAssets = assetsResponse.data;
 

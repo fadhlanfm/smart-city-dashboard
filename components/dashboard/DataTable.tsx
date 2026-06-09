@@ -62,9 +62,29 @@ export function DataTable<T extends Record<string, unknown>>({ columns, data, me
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          Showing {((meta.page - 1) * meta.pageSize) + 1} to {Math.min(meta.page * meta.pageSize, meta.total)} of {meta.total} results
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div>
+            Showing {((meta.page - 1) * meta.pageSize) + 1} to {Math.min(meta.page * meta.pageSize, meta.total)} of {meta.total} results
+          </div>
+          <div className="flex items-center gap-2">
+            <span>Rows per page:</span>
+            <select
+              className="h-8 rounded-md border bg-transparent px-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              value={meta.pageSize}
+              onChange={(e) => {
+                const params = new URLSearchParams(searchParams.toString());
+                params.set('pageSize', e.target.value);
+                params.set('page', '1'); // Reset to page 1
+                router.push(`/?${params.toString()}`, { scroll: false });
+              }}
+            >
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
         </div>
         <div className="flex items-center space-x-1">
           <Button
