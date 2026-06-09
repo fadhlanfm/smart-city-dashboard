@@ -1,4 +1,4 @@
-import { getFilteredAssets, getAssetSummary, createAsset, updateAsset, getAssetGeoJSON, deleteAsset } from '@/lib/services/asset.service';
+import { getFilteredAssets, getAssetSummary, createAsset, updateAsset, getAssetGeoJSON, deleteAsset, getAssetDetail } from '@/lib/services/asset.service';
 import { prisma } from '@/lib/db/prisma';
 
 jest.mock('@/lib/db/prisma', () => ({
@@ -188,6 +188,16 @@ describe('Asset Service', () => {
       expect(esClient.delete).toHaveBeenCalled();
     });
 
+    it('should ignore 404 error from ES delete', async () => {
+      const { esClient } = require('@/lib/db/elasticsearch');
+      console.error = jest.fn();
+      
+      (esClient.delete as jest.Mock).mockRejectedValueOnce({ meta: { statusCode: 404 } });
+      
+      await deleteAsset('1');
+      expect(console.error).not.toHaveBeenCalled();
+    });
+
     it('should handle ES delete error gracefully', async () => {
       const { esClient } = require('@/lib/db/elasticsearch');
       console.error = jest.fn();
@@ -197,6 +207,70 @@ describe('Asset Service', () => {
       
       await deleteAsset('1');
       expect(console.error).toHaveBeenCalledWith('ES Delete error', expect.any(Object));
+    });
+  });
+
+  describe('Vercel Mock DB Fallback', () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      process.env = { ...originalEnv };
+      console.error = jest.fn(); // suppress expected errors
+    });
+
+    afterAll(() => {
+      process.env = originalEnv;
+    });
+
+    it('should use mockService when NEXT_PUBLIC_USE_MOCK_DB is true', async () => {
+      process.env.NEXT_PUBLIC_USE_MOCK_DB = 'true';
+      const result = await getFilteredAssets({});
+      expect(result.data).toBeDefined();
+    });
+
+    it('should fall back to mockService on DB error for getFilteredAssets', async () => {
+      (prisma.asset.count as jest.Mock).mockRejectedValueOnce(new Error('DB connection failed'));
+      const result = await getFilteredAssets({});
+      expect(console.error).toHaveBeenCalledWith('DB Error (getFilteredAssets), falling back to mock', expect.any(Error));
+      expect(result.data).toBeDefined();
+    });
+
+    it('should fall back to mockService on DB error for getAssetSummary', async () => {
+      (prisma.asset.groupBy as jest.Mock).mockRejectedValueOnce(new Error('DB connection failed'));
+      const result = await getAssetSummary({});
+      expect(console.error).toHaveBeenCalledWith('DB Error (getAssetSummary), falling back to mock', expect.any(Error));
+      expect(result).toBeDefined();
+    });
+
+    it('should fall back to mockService on DB error for getAssetGeoJSON', async () => {
+      (prisma.$queryRaw as jest.Mock).mockRejectedValueOnce(new Error('DB connection failed'));
+      const result = await getAssetGeoJSON({ page: 1, pageSize: 10, sort: 'name', order: 'asc' });
+      expect(console.error).toHaveBeenCalledWith('DB Error (getAssetGeoJSON), falling back to mock', expect.any(Error));
+      expect(result.type).toBe('FeatureCollection');
+    });
+
+    it('should fall back to mockService on DB error for getAssetDetail', async () => {
+      (prisma.asset.findUnique as jest.Mock).mockRejectedValueOnce(new Error('DB connection failed'));
+      const result = await getAssetDetail('test-id');
+      expect(console.error).toHaveBeenCalledWith('DB Error (getAssetDetail), falling back to mock', expect.any(Error));
+    });
+
+    it('should fall back to mockService on DB error for createAsset', async () => {
+      (prisma.$executeRaw as jest.Mock).mockRejectedValueOnce(new Error('DB connection failed'));
+      const result = await createAsset({ id: '1', name: 'A1', type: 'ROAD', status: 'ACTIVE', districtId: 'd1', lon: 0, lat: 0, tags: [] });
+      expect(console.error).toHaveBeenCalledWith('DB Error (createAsset), falling back to mock', expect.any(Error));
+    });
+
+    it('should fall back to mockService on DB error for updateAsset', async () => {
+      (prisma.$executeRaw as jest.Mock).mockRejectedValueOnce(new Error('DB connection failed'));
+      const result = await updateAsset('1', { name: 'A2', type: 'ROAD', status: 'ACTIVE', districtId: 'd1', lon: 0, lat: 0, tags: [] });
+      expect(console.error).toHaveBeenCalledWith('DB Error (updateAsset), falling back to mock', expect.any(Error));
+    });
+
+    it('should fall back to mockService on DB error for deleteAsset', async () => {
+      (prisma.asset.delete as jest.Mock).mockRejectedValueOnce(new Error('DB connection failed'));
+      const result = await deleteAsset('1');
+      expect(console.error).toHaveBeenCalledWith('DB Error (deleteAsset), falling back to mock', expect.any(Error));
     });
   });
 });

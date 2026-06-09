@@ -1,15 +1,26 @@
 import { searchAssets } from '@/lib/services/search.service';
-import { esClient } from '@/lib/db/elasticsearch';
 
-jest.mock('@/lib/db/elasticsearch', () => ({
-  esClient: {
-    search: jest.fn(),
-  },
-}));
-
-jest.mock('@/lib/services/cache.service', () => ({
-  getCache: jest.fn().mockResolvedValue(null),
-  setCache: jest.fn().mockResolvedValue(null),
+jest.mock('@/lib/mock-data', () => ({
+  mockAssets: [
+    {
+      id: 'a1',
+      name: 'Central Park',
+      type: 'PARK',
+      status: 'ACTIVE',
+      districtName: 'Downtown',
+      districtId: 'd1',
+      location: { type: 'Point', coordinates: [107.6, -6.9] }
+    },
+    {
+      id: 'a2',
+      name: 'Main Street',
+      type: 'ROAD',
+      status: 'ACTIVE',
+      districtName: 'Uptown',
+      districtId: 'd2',
+      location: { type: 'Point', coordinates: [107.61, -6.91] }
+    }
+  ]
 }));
 
 describe('Search Service', () => {
@@ -17,65 +28,20 @@ describe('Search Service', () => {
     jest.clearAllMocks();
   });
 
-  it('should construct multimatch query and return mapped results', async () => {
-    (esClient.search as jest.Mock).mockResolvedValueOnce({
-      hits: {
-        hits: [
-          {
-            _id: '1',
-            _score: 1.5,
-            _source: {
-              name: 'Central Park',
-              type: 'PARK',
-              district: 'Downtown',
-              districtId: 'd1',
-              status: 'ACTIVE',
-              location: { lat: 0, lon: 0 },
-            },
-          },
-        ],
-      },
-    });
-
+  it('should return matched assets by name', async () => {
     const result = await searchAssets({ q: 'park', size: 10 });
-    
-    expect(esClient.search).toHaveBeenCalledWith(expect.objectContaining({
-      index: 'smart_city_assets',
-      body: expect.objectContaining({
-        query: expect.objectContaining({
-          bool: expect.objectContaining({
-            must: expect.any(Object),
-          }),
-        }),
-      }),
-    }));
-
     expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('Central Park');
+    expect(result[0].id).toBe('a1');
   });
 
-  it('should handle ES error and return empty array', async () => {
-    console.error = jest.fn(); // Suppress expected error log
-    (esClient.search as jest.Mock).mockRejectedValueOnce(new Error('ES connection failed'));
-    
-    const result = await searchAssets({ q: 'park' });
-    expect(result).toEqual([]);
-    expect(console.error).toHaveBeenCalledWith('Elasticsearch search failed:', expect.any(Error));
+  it('should return matched assets by district name', async () => {
+    const result = await searchAssets({ q: 'uptown', size: 10 });
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('a2');
   });
 
-  it('should return empty array if no hits', async () => {
-    (esClient.search as jest.Mock).mockResolvedValue({ hits: { hits: [] } });
-    const result = await searchAssets({ q: 'park' });
-    expect(result).toEqual([]);
-  });
-
-  it('should return cached result if available', async () => {
-    const { getCache } = require('@/lib/services/cache.service');
-    const cachedData = [{ id: 'cached' }];
-    (getCache as jest.Mock).mockResolvedValueOnce(cachedData);
-
-    const result = await searchAssets({ q: 'park' });
-    expect(result[0].id).toBe('cached');
-    expect(esClient.search).not.toHaveBeenCalled();
+  it('should return empty array if no matches', async () => {
+    const result = await searchAssets({ q: 'nowhere', size: 10 });
+    expect(result).toHaveLength(0);
   });
 });

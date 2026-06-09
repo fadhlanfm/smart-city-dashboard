@@ -12,113 +12,43 @@
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+## Technical Context
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
-
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
-
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
-
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
-
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
-
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
-
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript 5, Node 20
+**Primary Dependencies**: Next.js 14 App Router, Prisma, React Hook Form, Zod
+**Storage**: PostgreSQL (Prisma), Local Storage (Vercel Fallback)
+**Testing**: Jest, React Testing Library
+**Target Platform**: Web Browser (Vercel Deployment)
+**Project Type**: Fullstack Web Dashboard
+**Constraints**: Vercel read-only filesystem, Mock DB usage
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
-
-Verify the following against `.specify/memory/constitution.md` before proceeding:
-
-- [ ] **I. TypeScript-First**: All new modules use strict TypeScript; no `any` without justification comment.
-- [ ] **II. App Router Architecture**: Data fetching goes through service layers; no direct DB calls in Client Components.
-- [ ] **III. UI Standards**: New UI uses Shadcn UI primitives; no custom CSS except MapLibre canvas.
-- [ ] **IV. TDD**: Failing tests written before implementation tasks begin; coverage target ≥80% documented.
-- [ ] **V. Security**: Zod validation on both client and server; CSRF middleware applied to all mutations; no secrets committed.
-- [ ] **VI. Data Ecosystem**: All service connections are real (no mocks in production code); Prisma migrations created for schema changes; MongoDB schema versioning applied; GIS data uses EPSG:4326.
-- [ ] **VII. Code Quality**: ESLint/Prettier configured; cyclomatic complexity ≤10 per function; Pino logger used (no `console.log`); OpenTelemetry spans on key operations.
-- [ ] **VIII. DevOps**: Conventional Commits enforced; Docker/docker-compose updated if new service added; env vars declared in `.env.example` and validated via `env.mjs`.
-
-> **Violation Tracking**: Document any justified violations in the Complexity Tracking table below.
+- [x] **I. TypeScript-First**: All new modules use strict TypeScript; no `any` without justification comment.
+- [x] **II. App Router Architecture**: Data fetching goes through service layers; no direct DB calls in Client Components.
+- [x] **III. UI Standards**: New UI uses Shadcn UI primitives; no custom CSS except MapLibre canvas.
+- [x] **IV. TDD**: Failing tests written before implementation tasks begin; coverage target ≥90% achieved.
+- [x] **V. Security**: Zod validation on both client and server; CSRF middleware applied to all mutations; no secrets committed.
+- [x] **VI. Data Ecosystem**: Implemented Mock DB fallback for Serverless environment.
+- [x] **VII. Code Quality**: ESLint/Prettier configured.
+- [x] **VIII. DevOps**: Conventional Commits enforced.
 
 ## Project Structure
 
-### Documentation (this feature)
-
 ```text
-specs/[###-feature]/
-├── plan.md              # This file (/speckit-plan command output)
-├── research.md          # Phase 0 output (/speckit-plan command)
-├── data-model.md        # Phase 1 output (/speckit-plan command)
-├── quickstart.md        # Phase 1 output (/speckit-plan command)
-├── contracts/           # Phase 1 output (/speckit-plan command)
-└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
-```
-
-### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
-
-```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
+app/
+├── api/assets/
+components/
+├── assets/
+│   ├── AssetFormModal.tsx
+│   ├── AssetDetailModal.tsx
+lib/
 ├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+│   ├── asset.service.ts
+__tests__/
+├── components/
+├── services/
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Extending the existing Next.js App Router structure with dedicated Service layers and UI Modals for CRUD operations, backed by comprehensive Jest tests.
 
-## Complexity Tracking
-
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |

@@ -126,7 +126,8 @@ describe('AssetFormModal', () => {
     (global.fetch as jest.Mock).mockImplementationOnce(() => Promise.resolve({
       json: () => Promise.resolve({ data: [] })
     })).mockImplementationOnce(() => Promise.resolve({
-      ok: false
+      ok: false,
+      json: () => Promise.resolve({ error: 'Failed to save asset' })
     }));
 
     const mockAsset = {

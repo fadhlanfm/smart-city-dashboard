@@ -1,10 +1,23 @@
 import { analyzeBuffer, checkIntersection } from '@/lib/services/spatial.service';
-import { prisma } from '@/lib/db/prisma';
 
-jest.mock('@/lib/db/prisma', () => ({
-  prisma: {
-    $queryRaw: jest.fn(),
-  },
+jest.mock('@/lib/mock-data', () => ({
+  mockAssets: [
+    {
+      id: 'a1',
+      name: 'Central Park',
+      location: { coordinates: [107.6, -6.9] },
+      type: 'PARK'
+    },
+    {
+      id: 'a2',
+      name: 'Other Park',
+      location: { coordinates: [107.6001, -6.9001] }, // Very close to a1
+      type: 'PARK'
+    }
+  ],
+  mockDistricts: [
+    { id: 'd1', name: 'Downtown', code: 'DT' }
+  ]
 }));
 
 describe('Spatial Service', () => {
@@ -13,24 +26,19 @@ describe('Spatial Service', () => {
   });
 
   it('analyzeBuffer should return buffer polygon and affected assets', async () => {
-    (prisma.$queryRaw as jest.Mock).mockResolvedValue([
-      {
-        buffer_polygon: { type: 'Polygon', coordinates: [] },
-        affected_assets: [{ id: 'a2', name: 'Other Park', distance: 50 }]
-      }
-    ]);
-
-    const res = await analyzeBuffer('a1', 100);
+    const res = await analyzeBuffer('a1', 1000); // 1km radius
     expect(res?.bufferGeoJSON.type).toBe('Feature');
     expect(res?.affectedAssets).toHaveLength(1);
+    expect(res?.affectedAssets[0].id).toBe('a2');
+  });
+
+  it('analyzeBuffer should return null if asset not found', async () => {
+    const res = await analyzeBuffer('unknown', 100);
+    expect(res).toBeNull();
   });
 
   it('checkIntersection should return point and districts', async () => {
-    (prisma.$queryRaw as jest.Mock).mockResolvedValue([
-      { id: 'd1', name: 'Downtown', code: 'DT', geometry: {} }
-    ]);
-
-    const res = await checkIntersection(-74.0, 40.7);
+    const res = await checkIntersection(107.6, -6.9);
     expect(res.districts).toHaveLength(1);
     expect(res.districts[0].name).toBe('Downtown');
   });

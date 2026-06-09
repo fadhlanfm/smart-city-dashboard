@@ -9,8 +9,8 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, refresh: jest.fn() }),
 }));
 
-jest.mock('@/lib/actions/auth.actions', () => ({
-  handleSignOut: jest.fn(),
+jest.mock('next-auth/react', () => ({
+  signOut: jest.fn(),
 }));
 
 describe('Header', () => {

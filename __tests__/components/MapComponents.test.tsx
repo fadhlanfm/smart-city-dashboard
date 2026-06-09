@@ -45,15 +45,18 @@ jest.mock('react-map-gl/maplibre', () => {
 
 // Mock zustand map store
 const mockSelectAsset = jest.fn();
+const mockOpenDetailModal = jest.fn();
 const mockSetBufferResult = jest.fn();
 const mockSetIntersectResult = jest.fn();
 
 let mockSpatialMode = 'none';
+let mockBufferResult: any = null;
+let mockIntersectResult: any = null;
 
 jest.mock('@/store/mapStore', () => ({
   useMapStore: () => ({
     selectAsset: mockSelectAsset,
-    openDetailModal: jest.fn(),
+    openDetailModal: mockOpenDetailModal,
     toggleLayer: jest.fn(),
     setBasemap: jest.fn(),
     setSpatialMode: jest.fn(),
@@ -66,8 +69,8 @@ jest.mock('@/store/mapStore', () => ({
     activeBasemap: 'vector',
     spatialMode: mockSpatialMode,
     bufferRadius: 500,
-    bufferResult: null,
-    intersectResult: null,
+    bufferResult: mockBufferResult,
+    intersectResult: mockIntersectResult,
     mapRef: null,
     layerVisibility: {
       heatmap: true,
@@ -220,6 +223,11 @@ describe('Map Components', () => {
   });
 
   describe('MarkerPopup', () => {
+    afterEach(() => {
+      localStorage.clear();
+      jest.clearAllMocks();
+    });
+
     it('renders asset data after fetch', async () => {
       render(<MarkerPopup assetId="1" />);
       expect(await screen.findByText('Test Asset')).toBeInTheDocument();
@@ -230,6 +238,31 @@ describe('Map Components', () => {
       (global.fetch as jest.Mock).mockImplementationOnce(() => new Promise(() => {}));
       render(<MarkerPopup assetId="loading" />);
       expect(screen.queryByText('View Details')).not.toBeInTheDocument();
+    });
+
+    it('uses localStorage mock data if available', async () => {
+      localStorage.setItem('mock_new_assets', JSON.stringify([
+        { id: 'local-1', name: 'Local Asset', type: 'PARK', status: 'INACTIVE', district: { name: 'Local Dist' } }
+      ]));
+      render(<MarkerPopup assetId="local-1" />);
+      expect(await screen.findByText('Local Asset')).toBeInTheDocument();
+    });
+
+    it('closes popup and clears selectAsset on close', async () => {
+      render(<MarkerPopup assetId="1" />);
+      const assetName = await screen.findByText('Test Asset');
+      expect(assetName).toBeInTheDocument();
+      // react-map-gl Popup renders the children, but the mock we created wraps it in <div data-testid="popup-mock" onClick={onClose}>
+      const popupMock = screen.getByTestId('popup-mock');
+      fireEvent.click(popupMock); // triggers onClose
+      expect(mockSelectAsset).toHaveBeenCalledWith(null);
+    });
+
+    it('calls openDetailModal when View Details is clicked', async () => {
+      render(<MarkerPopup assetId="1" />);
+      const btn = await screen.findByText('View Details');
+      fireEvent.click(btn);
+      expect(mockOpenDetailModal).toHaveBeenCalledWith('1');
     });
   });
 
@@ -266,18 +299,22 @@ describe('Map Components', () => {
 
     it('shows buffer result when bufferResult is set', () => {
       mockSpatialMode = 'buffer';
-      // Temporarily override the mock to include a bufferResult
-      jest.resetModules();
-      const { useMapStore } = require('@/store/mapStore');
+      mockBufferResult = { affectedAssets: [ { id: '1', name: 'Asset 1' } ] };
+      
       render(<SpatialToolsPanel />);
-      // We can at least verify the panel renders without error
-      expect(screen.getByText('Spatial Analytics')).toBeInTheDocument();
+      expect(screen.getByText(/Found/i)).toBeInTheDocument();
+      expect(screen.getByText(/1/)).toBeInTheDocument();
+      mockBufferResult = null; // reset
     });
 
     it('shows intersect result when intersectResult is set', () => {
       mockSpatialMode = 'intersect';
+      mockIntersectResult = { districts: [ { id: 'd1', name: 'Downtown' } ] };
+      
       render(<SpatialToolsPanel />);
-      expect(screen.getByText('Click anywhere on the map to query intersection geometry.')).toBeInTheDocument();
+      expect(screen.getByText('Districts Found:')).toBeInTheDocument();
+      expect(screen.getByText('Downtown')).toBeInTheDocument();
+      mockIntersectResult = null; // reset
     });
 
     it('clicking Buffer button sets mode', () => {

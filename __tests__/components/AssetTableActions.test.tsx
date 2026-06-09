@@ -46,11 +46,32 @@ describe('AssetTableActions', () => {
     expect(screen.getByText('Add New Asset')).toBeInTheDocument();
   });
 
-  it('renders export links with correct href', () => {
+  it('calls fetch with correct URL when export buttons are clicked', async () => {
+    // Mock window.URL.createObjectURL and revokeObjectURL
+    window.URL.createObjectURL = jest.fn(() => 'blob:url');
+    window.URL.revokeObjectURL = jest.fn();
+    
     render(<AssetTableActions searchParams={{ districtId: 'd1' }} />);
-    const csvLink = screen.getByText('Export CSV').closest('a');
-    expect(csvLink?.href).toContain('format=csv');
-    expect(csvLink?.href).toContain('districtId=d1');
+    
+    // Test CSV Export
+    const csvBtn = screen.getByText('Export CSV');
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(new Blob(['csv data'])),
+    });
+    fireEvent.click(csvBtn);
+    
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/export?format=csv&districtId=d1'));
+    
+    // Test GeoJSON Export
+    const geoBtn = screen.getByText('Export GeoJSON');
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(new Blob(['geojson data'])),
+    });
+    fireEvent.click(geoBtn);
+    
+    expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/api/export?format=geojson&districtId=d1'));
   });
 
   it('handles modal onClose and onSuccess', () => {

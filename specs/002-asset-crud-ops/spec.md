@@ -56,9 +56,9 @@ As an administrator, I want to remove an asset from the system if it has been pe
 ### Functional Requirements
 
 - **FR-001**: System MUST provide a user interface (Form/Modal) to input asset details (Name, Type, District, Status) and pick coordinates from an interactive map.
-- **FR-002**: System MUST synchronize creation across PostgreSQL (core), MongoDB (document initialization), and Elasticsearch (search index).
+- **FR-002**: System MUST synchronize creation across PostgreSQL (core), MongoDB (document initialization), and Elasticsearch (search index). **Note**: In production (Vercel), due to read-only file systems and serverless environments without connected databases, the system MUST implement a local storage fallback/hydration layer for CRUD operations.
 - **FR-003**: System MUST invalidate relevant Redis caches when an asset is created, updated, or deleted to ensure data freshness.
-- **FR-004**: System MUST handle asset deletion via hard-delete (permanently removing records from PostgreSQL, MongoDB, and Elasticsearch).
+- **FR-004**: System MUST handle asset deletion via hard-delete (permanently removing records from PostgreSQL, MongoDB, and Elasticsearch), falling back to local storage removals in production.
 - **FR-005**: System MUST allow any authenticated/registered user to perform CRUD operations on POI assets. Operations on Districts and Incidents are out of scope.
 
 > **Constitution Alignment — Mandatory for every feature**:
