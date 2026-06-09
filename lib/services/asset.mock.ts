@@ -85,9 +85,25 @@ export const mockService = {
       if (lon !== undefined && lat !== undefined) mockAssets[idx].location = { type: 'Point', coordinates: [lon, lat] };
       if (tags) mockAssets[idx].tags = tags;
       mockAssets[idx].updatedAt = new Date().toISOString();
+      saveMockAssets(mockAssets);
+      return mockAssets[idx];
+    } else {
+      const districtName = mockDistricts.find(d => d.id === districtId)?.name || 'Mock District';
+      return {
+        id, 
+        name: name || 'Unknown Asset', 
+        type: type || 'POI', 
+        status: status || 'ACTIVE', 
+        districtId: districtId || '', 
+        tags: tags || [], 
+        districtName,
+        location: { type: 'Point', coordinates: [lon || 107.61, lat || -6.91] },
+        geometry: { type: 'Point', coordinates: [lon || 107.61, lat || -6.91] },
+        district: { id: districtId || '', name: districtName },
+        createdAt: new Date().toISOString(), 
+        updatedAt: new Date().toISOString()
+      };
     }
-    saveMockAssets(mockAssets);
-    return mockAssets[idx] || { id };
   },
   async deleteAsset(id: string) {
     const { getMockAssets, saveMockAssets } = await import('@/lib/mock-data');
