@@ -27,12 +27,29 @@ export function AssetDetailModal({ assetId, isOpen, onClose }: AssetDetailModalP
     if (isOpen && assetId) {
       window.dispatchEvent(new Event('tour-asset-detail-opened'));
       setIsLoading(true);
-      fetch(`/api/assets/${assetId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.data) setAsset(data.data);
-        })
-        .finally(() => setIsLoading(false));
+      
+      let localFound = false;
+      try {
+        const localStr = localStorage.getItem('mock_new_assets');
+        if (localStr) {
+          const localAssets = JSON.parse(localStr);
+          const localAsset = localAssets.find((a: any) => a.id === assetId);
+          if (localAsset) {
+             setAsset(localAsset);
+             setIsLoading(false);
+             localFound = true;
+          }
+        }
+      } catch(e) {}
+
+      if (!localFound) {
+        fetch(`/api/assets/${assetId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.data) setAsset(data.data);
+          })
+          .finally(() => setIsLoading(false));
+      }
     } else {
       setAsset(null);
     }

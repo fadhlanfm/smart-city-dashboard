@@ -69,7 +69,36 @@ export function MapView() {
 
   useEffect(() => {
     fetch('/api/districts/geojson').then(res => res.json()).then(setDistricts);
-    fetch('/api/assets/geojson').then(res => res.json()).then(setAssets);
+    fetch('/api/assets/geojson').then(res => res.json()).then(data => {
+      try {
+        const localStr = localStorage.getItem('mock_new_assets');
+        const deletedStr = localStorage.getItem('mock_deleted_assets');
+        const localAssets = localStr ? JSON.parse(localStr) : [];
+        const deletedAssets = deletedStr ? JSON.parse(deletedStr) : [];
+        
+        let features = data.features || [];
+        
+        const localFeatures = localAssets.map((a: any) => ({
+          type: 'Feature',
+          geometry: a.location || { type: 'Point', coordinates: [a.lon, a.lat] },
+          properties: {
+            id: a.id,
+            name: a.name,
+            type: a.type,
+            status: a.status,
+            districtId: a.districtId,
+          }
+        }));
+
+        features = [...localFeatures, ...features]
+          .filter((v, i, a) => a.findIndex(t => t.properties.id === v.properties.id) === i)
+          .filter(v => !deletedAssets.includes(v.properties.id));
+          
+        setAssets({ ...data, features });
+      } catch (e) {
+        setAssets(data);
+      }
+    });
     fetch('/api/incidents/geojson').then(res => res.json()).then(setIncidents);
   }, []);
 

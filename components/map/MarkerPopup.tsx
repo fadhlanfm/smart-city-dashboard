@@ -17,6 +17,19 @@ export function MarkerPopup({ assetId }: MarkerPopupProps) {
 
   useEffect(() => {
     let isMounted = true;
+    
+    try {
+      const localStr = localStorage.getItem('mock_new_assets');
+      if (localStr) {
+        const localAssets = JSON.parse(localStr);
+        const localAsset = localAssets.find((a: any) => a.id === assetId);
+        if (localAsset) {
+           setData(localAsset);
+           return;
+        }
+      }
+    } catch(e) {}
+
     fetch(`/api/assets/${assetId}`)
       .then(res => res.json())
       .then(resData => {
