@@ -19,7 +19,7 @@ describe('AssetTableWrapper', () => {
     ] as any;
 
     const mockMeta = { total: 2, page: 1, pageSize: 10, totalPages: 1 };
-    render(<AssetTableWrapper data={mockAssets} meta={mockMeta} onEdit={jest.fn()} onDeleteSuccess={jest.fn()} />);
+    render(<AssetTableWrapper data={mockAssets} meta={mockMeta} />);
     
     expect(screen.getByTestId('data-table')).toHaveTextContent('Rows: 2');
   });

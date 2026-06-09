@@ -224,20 +224,20 @@ describe('Asset Service', () => {
 
     it('should use mockService when NEXT_PUBLIC_USE_MOCK_DB is true', async () => {
       process.env.NEXT_PUBLIC_USE_MOCK_DB = 'true';
-      const result = await getFilteredAssets({});
+      const result = await getFilteredAssets({ page: 1, pageSize: 10, sort: 'name', order: 'asc' });
       expect(result.data).toBeDefined();
     });
 
     it('should fall back to mockService on DB error for getFilteredAssets', async () => {
       (prisma.asset.count as jest.Mock).mockRejectedValueOnce(new Error('DB connection failed'));
-      const result = await getFilteredAssets({});
+      const result = await getFilteredAssets({ page: 1, pageSize: 10, sort: 'name', order: 'asc' });
       expect(console.error).toHaveBeenCalledWith('DB Error (getFilteredAssets), falling back to mock', expect.any(Error));
       expect(result.data).toBeDefined();
     });
 
     it('should fall back to mockService on DB error for getAssetSummary', async () => {
       (prisma.asset.groupBy as jest.Mock).mockRejectedValueOnce(new Error('DB connection failed'));
-      const result = await getAssetSummary({});
+      const result = await getAssetSummary({ page: 1, pageSize: 10, sort: 'name', order: 'asc' });
       expect(console.error).toHaveBeenCalledWith('DB Error (getAssetSummary), falling back to mock', expect.any(Error));
       expect(result).toBeDefined();
     });

@@ -140,7 +140,7 @@ describe('Map Components', () => {
     it('renders map with given data', () => {
       const mockIncidents = { type: 'FeatureCollection', features: [] } as any;
       const mockAssets = { type: 'FeatureCollection', features: [] } as any;
-      render(<MapView incidents={mockIncidents} assets={mockAssets} />);
+      render(<MapView />);
       expect(screen.getByTestId('map-mock')).toBeInTheDocument();
     });
 
@@ -268,7 +268,7 @@ describe('Map Components', () => {
 
   describe('SpatialToolsPanel', () => {
     it('renders Spatial Analytics heading and tool buttons', () => {
-      render(<SpatialToolsPanel onSearchResults={jest.fn()} />);
+      render(<SpatialToolsPanel />);
       expect(screen.getByText('Spatial Analytics')).toBeInTheDocument();
       expect(screen.getByText('Buffer')).toBeInTheDocument();
       expect(screen.getByText('Intersect')).toBeInTheDocument();
