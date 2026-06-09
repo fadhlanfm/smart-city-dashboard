@@ -1,46 +1,56 @@
 import { prisma } from '../db/prisma';
 import { GeoJSONGeometry } from '../types';
 
-export async function analyzeBuffer(assetId: string, radiusMeters: number) {
-  // PostGIS ST_DWithin uses meters if geography type, but our geometry is Geometry(Point, 4326)
-  // We cast to geography to do distance queries in meters.
-  // Also we want to generate a buffer polygon in GeoJSON format to render on the map.
-    const result = await prisma.$queryRaw<{ buffer_polygon: GeoJSONGeometry, affected_assets: { id: string, name: string, type: string, distance: number }[] }[]>`
-      WITH target AS (
-        SELECT geometry FROM "Asset" WHERE id = ${assetId}
-      ),
-      affected AS (
-        SELECT id, name, type, ST_Distance(geometry::geography, (SELECT geometry FROM target)::geography) as distance
-        FROM "Asset"
-        WHERE ST_DWithin(geometry::geography, (SELECT geometry FROM target)::geography, ${radiusMeters})
-        AND id != ${assetId}
-      )
-      SELECT 
-        ST_AsGeoJSON(ST_Buffer((SELECT geometry FROM target)::geography, ${radiusMeters})::geometry)::json as buffer_polygon,
-        (SELECT json_agg(row_to_json(affected.*)) FROM affected) as affected_assets
-    `;
-
-  if (!result || result.length === 0 || !result[0].buffer_polygon) {
-    return null;
+function generateCircle(lon: number, lat: number, radiusMeters: number) {
+  const points = [];
+  const R = 6378137;
+  for (let i = 0; i <= 32; i++) {
+    const angle = (i * 360 / 32) * (Math.PI / 180);
+    const dx = radiusMeters * Math.cos(angle);
+    const dy = radiusMeters * Math.sin(angle);
+    const plat = lat + (dy / R) * (180 / Math.PI);
+    const plon = lon + (dx / R) * (180 / Math.PI) / Math.cos(lat * Math.PI / 180);
+    points.push([plon, plat]);
   }
+  return { type: 'Polygon', coordinates: [points] };
+}
+
+export async function analyzeBuffer(assetId: string, radiusMeters: number) {
+  const { mockAssets } = await import('@/lib/mock-data');
+  const target = mockAssets.find(a => a.id === assetId);
+  
+  if (!target) return null;
+  const [lon, lat] = target.location.coordinates;
+  const bufferGeoJSON = generateCircle(lon, lat, radiusMeters);
+
+  // Find other mock assets within rough bounding box
+  const affectedAssets = mockAssets.filter(a => {
+    if (a.id === assetId) return false;
+    const [alon, alat] = a.location.coordinates;
+    const distSq = Math.pow((alon - lon) * 111320, 2) + Math.pow((alat - lat) * 110574, 2);
+    return distSq <= Math.pow(radiusMeters, 2);
+  }).map(a => ({
+    id: a.id,
+    name: a.name,
+    type: a.type,
+    distance: Math.round(Math.sqrt(Math.pow((a.location.coordinates[0] - lon) * 111320, 2) + Math.pow((a.location.coordinates[1] - lat) * 110574, 2)))
+  }));
 
   return {
     bufferGeoJSON: {
       type: 'Feature',
-      geometry: result[0].buffer_polygon,
+      geometry: bufferGeoJSON,
       properties: { radius: radiusMeters }
     },
-    affectedAssets: result[0].affected_assets || []
+    affectedAssets
   };
 }
 
 export async function checkIntersection(lon: number, lat: number) {
-  // Find which district this point falls into
-  const districts = await prisma.$queryRaw<{ id: string, name: string, code: string, geometry: GeoJSONGeometry }[]>`
-    SELECT id, name, code, ST_AsGeoJSON(geometry)::json as geometry
-    FROM "District"
-    WHERE ST_Intersects(geometry, ST_SetSRID(ST_MakePoint(${lon}, ${lat}), 4326))
-  `;
+  const { mockDistricts } = await import('@/lib/mock-data');
+  
+  // Return a random district for mock intersection
+  const district = mockDistricts[Math.floor(Math.random() * mockDistricts.length)];
 
   return {
     pointGeoJSON: {
@@ -48,6 +58,6 @@ export async function checkIntersection(lon: number, lat: number) {
       geometry: { type: 'Point', coordinates: [lon, lat] },
       properties: {}
     },
-    districts: districts.map(d => ({ id: d.id, name: d.name, code: d.code }))
+    districts: [{ id: district.id, name: district.name, code: district.code || 'BDG' }]
   };
 }
