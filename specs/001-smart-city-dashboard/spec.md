@@ -205,9 +205,9 @@ An authorized operator uses the dashboard to create a new asset, edit an existin
 
 **Acceptance Scenarios**:
 
-1. **Given** a user is on the dashboard, **When** they click "Add Asset", fill in the form (including map point selection), and click "Create", **Then** the asset is safely saved (bypassing Prisma limitation on Unsupported geometries using raw SQL), the modal closes, and the new asset appears immediately in the data table.
-2. **Given** an asset exists, **When** a user clicks "Edit", changes the status to "Maintenance", and clicks "Save", **Then** the database updates gracefully (handling PostGIS spatial and scalar data securely), and the table reflects the new status instantly without formatting errors (e.g. comma parsing).
-3. **Given** a user clicks "Delete" on an asset, **When** the Shadcn AlertDialog appears and they confirm, **Then** the asset is permanently removed from PostgreSQL, Elasticsearch, and MongoDB, the Redis cache is properly invalidated (preventing stale ghost records), and the asset disappears from the UI.
+1. **Given** a user is on the dashboard, **When** they click "Add Asset", fill in the form (including map point selection), and click "Create", **Then** the asset is safely saved (using a client-side Local Storage hydration layer to simulate persistence on Vercel's serverless environment), the modal closes, and the new asset appears immediately in the data table.
+2. **Given** an asset exists, **When** a user clicks "Edit", changes the status to "Maintenance", and clicks "Save", **Then** the mock service reconstructs the asset, updates the Local Storage state, and the table reflects the new status instantly without formatting errors (e.g. comma parsing).
+3. **Given** a user clicks "Delete" on an asset, **When** the Shadcn AlertDialog appears and they confirm, **Then** the asset ID is recorded in the deleted assets Local Storage array, preventing it from rendering in the UI or Map View, simulating a successful deletion.
 
 ---
 

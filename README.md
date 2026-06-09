@@ -66,6 +66,7 @@ Designed for scalability, this project utilizes a modern Fullstack architecture:
 - **MongoDB**: Handling unstructured data, metadata, and dynamic survey logs.
 - **Redis (Upstash)**: In-memory caching layer to drastically accelerate data fetching and API responses.
 - **Elasticsearch (Bonsai)**: Distributed, RESTful search engine for lightning-fast asset lookups.
+- **Serverless Architecture Adaptation**: Features a sophisticated client-side Local Storage hydration layer to simulate full CRUD operations on Vercel's read-only file system without requiring a persistent cloud database for demonstration purposes.
 
 ---
 

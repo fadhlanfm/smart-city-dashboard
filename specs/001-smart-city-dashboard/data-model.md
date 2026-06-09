@@ -15,6 +15,7 @@
 | AssetDocument | MongoDB | Variable metadata, photo URL arrays |
 | SearchIndexRecord | Elasticsearch | Full-text + geo search index |
 | CacheEntry | Redis | Short-lived key-value TTL cache |
+| Vercel Mock CRUD | Local Storage | Simulates database persistence for assets on read-only serverless deployments |
 
 ---
 

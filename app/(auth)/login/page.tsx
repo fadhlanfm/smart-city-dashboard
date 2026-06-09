@@ -42,7 +42,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <h3 className="text-xl font-semibold">Enterprise Operations</h3>
-                <p className="text-sm text-slate-400">Full CRUD, instant Elasticsearch, and comprehensive data extraction including <strong>CSV, PDF, and GeoJSON Export</strong>.</p>
+                <p className="text-sm text-slate-400">Full CRUD, instant Elasticsearch, comprehensive data extraction (CSV, PDF, GeoJSON), and a <strong>Serverless Mock-DB Hydration layer</strong> adapting to Vercel's read-only file system.</p>
               </div>
             </div>
 

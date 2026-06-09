@@ -234,10 +234,12 @@ provide clean testable business logic separate from HTTP handling in Route Handl
 4. **Cache-aside with graceful degradation**: Redis failures log via Pino and
    fall through to primary data sources without crashing.
 
-5. **NextAuth.js v5 JWT sessions**: GitHub OAuth2 as default. Session validated in
+5. **NextAuth.js v5 JWT sessions**: GitHub OAuth2 and Credentials provider (Dummy Login) as default. Session validated in
    Next.js Middleware for all protected routes.
 
 6. **T3 Env (`env.mjs`)**: Zod-validated environment variables; fast-fail on startup.
+
+7. **Vercel Read-Only Mock Strategy**: Since Vercel uses a read-only filesystem and does not deploy persistent DB containers natively without explicit cloud infrastructure configuration, CRUD operations (Create/Update/Delete) for assets use a complex client-side local storage hydration mechanism to intercept mock service endpoints and ensure the UI operates perfectly in demonstration scenarios.
 
 ### Testing Strategy
 
