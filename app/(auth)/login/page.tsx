@@ -107,7 +107,17 @@ export default function LoginPage() {
             <form
               action={async () => {
                 'use server';
-                await signIn('credentials');
+                try {
+                  console.log('Attempting dummy login...');
+                  await signIn('credentials');
+                } catch (error) {
+                  // Next.js uses errors to handle redirects. If it's a redirect error, throw it.
+                  if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+                    throw error;
+                  }
+                  console.error('Dummy Login Error:', error);
+                  throw error;
+                }
               }}
             >
               <button className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
