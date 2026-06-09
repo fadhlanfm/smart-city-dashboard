@@ -21,7 +21,15 @@ export function AssetTableWrapper({ data, meta }: AssetTableWrapperProps) {
     { accessorKey: 'type', header: 'Type' },
     { accessorKey: 'status', header: 'Status' },
     { accessorKey: 'districtName', header: 'District' },
-    { accessorKey: 'actions', header: 'Actions', cell: (row: TableAsset) => <AssetRowActions asset={row} /> },
+    { 
+      accessorKey: 'actions', 
+      header: 'Actions', 
+      cell: (row: TableAsset) => (
+        <div onClick={(e) => e.stopPropagation()}>
+          <AssetRowActions asset={row} />
+        </div>
+      ) 
+    },
   ];
 
   const router = useRouter();

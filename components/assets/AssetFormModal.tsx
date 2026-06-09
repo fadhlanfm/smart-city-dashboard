@@ -15,9 +15,11 @@ import { ExtendedAsset } from '@/lib/types';
 
 const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY && process.env.NEXT_PUBLIC_MAPTILER_KEY !== 'dummy_maptiler_key' 
   ? process.env.NEXT_PUBLIC_MAPTILER_KEY 
-  : 'get_your_own_OpIi9ZULNHzrESv6T2vL';
+  : null;
 
-const VECTOR_STYLE = `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER_KEY}`;
+const VECTOR_STYLE = MAPTILER_KEY 
+  ? `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER_KEY}`
+  : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
 interface AssetFormModalProps {
   isOpen: boolean;
