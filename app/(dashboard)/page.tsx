@@ -19,11 +19,19 @@ export default async function DashboardPage({
   const parsedParams = filterSchema.safeParse(searchParams);
   const filters = parsedParams.success ? parsedParams.data : { page: 1, pageSize: 10, sort: 'updatedAt', order: 'desc' as const };
 
-  const [assetsResponse, summary, districts] = await Promise.all([
-    getFilteredAssets(filters),
-    getAssetSummary(filters),
-    getAllDistricts(),
-  ]);
+  let assetsResponse = { data: [], meta: { total: 0, page: 1, pageSize: 10, totalPages: 0 } };
+  let summary = { total: 0, byType: [], byStatus: [] };
+  let districts: District[] = [];
+
+  try {
+    [assetsResponse, summary, districts] = await Promise.all([
+      getFilteredAssets(filters),
+      getAssetSummary(filters),
+      getAllDistricts(),
+    ]);
+  } catch (error) {
+    console.warn('Database unavailable, rendering with empty state:', error);
+  }
 
 
   const formattedAssets = assetsResponse.data.map((asset: Asset) => ({
