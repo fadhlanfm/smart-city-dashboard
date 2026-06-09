@@ -8,6 +8,13 @@ export const mockDistricts: any[] = [
   { id: 'bdg-regol', name: 'Regol', activeIncidents: 5, geometry: { type: 'Polygon', coordinates: [[[107.600, -6.935], [107.610, -6.935], [107.610, -6.945], [107.600, -6.945], [107.600, -6.935]]] } as any, coverageScore: 88, createdAt: new Date(), updatedAt: new Date() },
 ];
 
+// Simple seeded random generator
+let seed = 12345;
+function random() {
+  const x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
 const generateRandomCoordinates = (districtId: string): [number, number] => {
   // Bounding boxes roughly matching the districts in Bandung
   const bounds: Record<string, [number, number, number, number]> = {
@@ -19,8 +26,8 @@ const generateRandomCoordinates = (districtId: string): [number, number] => {
   };
   
   const b = bounds[districtId] || bounds['bdg-sumur-bandung'];
-  const lng = b[0] + Math.random() * (b[2] - b[0]);
-  const lat = b[1] + Math.random() * (b[3] - b[1]);
+  const lng = b[0] + random() * (b[2] - b[0]);
+  const lat = b[1] + random() * (b[3] - b[1]);
   return [lng, lat];
 };
 
@@ -28,24 +35,27 @@ const streetNames = ['Jl. Dago', 'Jl. Merdeka', 'Jl. Braga', 'Jl. Asia Afrika', 
 const assetTypes = ['CAMERA', 'STREETLIGHT', 'PARK', 'FACILITY', 'SENSOR', 'UTILITY'];
 const statuses = ['ACTIVE', 'INACTIVE', 'MAINTENANCE'];
 
+// Reset seed before generating assets to guarantee deterministic output across hot reloads/lambdas
+seed = 42;
+
 export const mockAssets: any[] = Array.from({ length: 300 }).map((_, i) => {
-  const district = mockDistricts[Math.floor(Math.random() * mockDistricts.length)];
-  const type = assetTypes[Math.floor(Math.random() * assetTypes.length)];
-  const status = statuses[Math.floor(Math.random() * statuses.length)];
-  const street = streetNames[Math.floor(Math.random() * streetNames.length)];
+  const district = mockDistricts[Math.floor(random() * mockDistricts.length)];
+  const type = assetTypes[Math.floor(random() * assetTypes.length)];
+  const status = statuses[Math.floor(random() * statuses.length)];
+  const street = streetNames[Math.floor(random() * streetNames.length)];
   
   let name = '';
   let meta = {};
   
   if (type === 'CAMERA') {
     name = `CCTV ${street} - Point ${i + 1}`;
-    meta = { resolution: '4K', brand: Math.random() > 0.5 ? 'Axis' : 'Hikvision', ip: `192.168.1.${i}` };
+    meta = { resolution: '4K', brand: random() > 0.5 ? 'Axis' : 'Hikvision', ip: `192.168.1.${i}` };
   } else if (type === 'STREETLIGHT') {
     name = `PJU Smart LED ${street} #${i + 1}`;
-    meta = { wattage: '120W', status: 'Online', dimming: Math.floor(Math.random() * 100) };
+    meta = { wattage: '120W', status: 'Online', dimming: Math.floor(random() * 100) };
   } else if (type === 'PARK') {
     name = `Taman Kota ${street.replace('Jl. ', '')}`;
-    meta = { area: `${Math.floor(Math.random() * 5000)}m2`, facilities: ['Bench', 'Trash Can'] };
+    meta = { area: `${Math.floor(random() * 5000)}m2`, facilities: ['Bench', 'Trash Can'] };
   } else {
     name = `${type} Node ${i + 1}`;
     meta = { vendor: 'SmartCityInc', firmware: 'v2.1.4' };
@@ -60,8 +70,8 @@ export const mockAssets: any[] = Array.from({ length: 300 }).map((_, i) => {
     metadata: meta,
     districtId: district.id,
     districtName: district.name,
-    createdAt: new Date(Date.now() - Math.random() * 10000000000),
-    updatedAt: new Date(Date.now() - Math.random() * 10000000),
+    createdAt: new Date(1685577600000 - random() * 10000000000), // Static base date
+    updatedAt: new Date(1685577600000 - random() * 10000000),
   };
 });
 
@@ -77,11 +87,11 @@ export const getMockSummary = () => {
 };
 
 export const mockIncidents: any[] = Array.from({ length: 50 }).map((_, i) => {
-  const district = mockDistricts[Math.floor(Math.random() * mockDistricts.length)];
+  const district = mockDistricts[Math.floor(random() * mockDistricts.length)];
   return {
     id: `mock-incident-${i}`,
     type: 'VANDALISM',
-    severity: Math.random() > 0.8 ? 'CRITICAL' : 'MINOR',
+    severity: random() > 0.8 ? 'CRITICAL' : 'MINOR',
     status: 'OPEN',
     description: 'Reported issue by citizen',
     location: { type: 'Point', coordinates: generateRandomCoordinates(district.id) },
