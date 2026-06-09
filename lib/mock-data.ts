@@ -40,8 +40,9 @@ seed = 42;
 
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
-const DB_FILE = path.join(process.cwd(), '.mock-db.json');
+const DB_FILE = path.join(os.tmpdir(), 'smart-city-mock-db.json');
 
 export function getMockAssets(): any[] {
   if (fs.existsSync(DB_FILE)) {
