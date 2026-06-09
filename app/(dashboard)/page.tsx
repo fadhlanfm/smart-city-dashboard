@@ -12,6 +12,8 @@ import { Activity, Box, Map, AlertTriangle } from 'lucide-react';
 import { filterSchema } from '@/lib/validators/filter.schema';
 import type { BaseResponse, ExtendedAsset } from '@/lib/types';
 
+import { mockAssets, mockDistricts, getMockSummary } from '@/lib/mock-data';
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -21,28 +23,12 @@ export default async function DashboardPage({
   const filters = parsedParams.success ? parsedParams.data : { page: 1, pageSize: 10, sort: 'updatedAt', order: 'desc' as const };
 
   // Temporary mock data until database is connected
-  const mockAsset = {
-    id: 'mock-1',
-    name: 'Central Park Security Camera',
-    type: 'CAMERA',
-    status: 'ACTIVE',
-    location: { type: 'Point', coordinates: [106.8272, -6.1751] },
-    metadata: { resolution: '4K', brand: 'Axis' },
-    districtId: 'district-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    districtName: 'Central District',
+  let assetsResponse: BaseResponse<any[]> = { 
+    data: mockAssets.slice(0, 50), // Show first 50 in table to avoid lag
+    meta: { total: mockAssets.length, page: 1, pageSize: 50, totalPages: Math.ceil(mockAssets.length/50) } 
   };
-
-  let assetsResponse: BaseResponse<any[]> = { data: [mockAsset], meta: { total: 1, page: 1, pageSize: 10, totalPages: 1 } };
-  let summary: { total: number; byType: any[]; byStatus: any[] } = { 
-    total: 1, 
-    byType: [{ type: 'CAMERA', count: 1n }], 
-    byStatus: [{ status: 'ACTIVE', count: 1n }] 
-  };
-  let districts: any[] = [
-    { id: 'district-1', name: 'Central District', activeIncidents: 2, geometry: null }
-  ];
+  let summary = getMockSummary();
+  let districts = mockDistricts;
 
   const formattedAssets = assetsResponse.data;
 

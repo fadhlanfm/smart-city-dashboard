@@ -6,26 +6,15 @@ import { GeoJSONFeatureCollection, IncidentDocument, GeoJSONGeometry } from '../
 import { FilterQuery } from 'mongoose';
 
 export async function getIncidentGeoJSON(filters: Record<string, string> = {}): Promise<GeoJSONFeatureCollection> {
-  const cacheKey = makeCacheKey('incidents:geojson', filters as Record<string, unknown>);
-  const cached = await getCache<GeoJSONFeatureCollection>(cacheKey);
-  if (cached) return cached;
-
-  await connectMongoDB();
-
-  const query: FilterQuery<typeof Incident> = {};
-  if (filters.status) query.status = filters.status;
-  if (filters.severity) query.severity = filters.severity;
-  if (filters.type) query.type = filters.type;
-
-  const incidents = await Incident.find(query).lean();
+  const { mockIncidents } = await import('@/lib/mock-data');
 
   const featureCollection: GeoJSONFeatureCollection = {
     type: 'FeatureCollection',
-    features: incidents.map((inc: Record<string, unknown>) => ({
+    features: mockIncidents.map((inc: any) => ({
       type: 'Feature',
       geometry: inc.location as GeoJSONGeometry,
       properties: {
-        id: (inc._id as { toString: () => string }).toString(),
+        id: inc.id,
         type: inc.type,
         severity: inc.severity,
         status: inc.status,
@@ -35,6 +24,5 @@ export async function getIncidentGeoJSON(filters: Record<string, string> = {}): 
     })),
   };
 
-  await setCache(cacheKey, featureCollection, 60);
   return featureCollection;
 }

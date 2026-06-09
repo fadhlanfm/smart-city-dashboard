@@ -10,10 +10,32 @@ import { GeoJSONFeatureCollection } from '@/lib/types';
 
 const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY && process.env.NEXT_PUBLIC_MAPTILER_KEY !== 'dummy_maptiler_key' 
   ? process.env.NEXT_PUBLIC_MAPTILER_KEY 
-  : 'get_your_own_OpIi9ZULNHzrESv6T2vL';
+  : null;
 
-const VECTOR_STYLE = `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER_KEY}`;
-const RASTER_STYLE = `https://api.maptiler.com/maps/satellite/style.json?key=${MAPTILER_KEY}`;
+const VECTOR_STYLE = MAPTILER_KEY 
+  ? `https://api.maptiler.com/maps/basic-v2/style.json?key=${MAPTILER_KEY}`
+  : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+
+const RASTER_STYLE = MAPTILER_KEY
+  ? `https://api.maptiler.com/maps/satellite/style.json?key=${MAPTILER_KEY}`
+  : {
+      version: 8,
+      sources: {
+        'osm': {
+          type: 'raster',
+          tiles: ['https://a.tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '&copy; OpenStreetMap Contributors',
+        }
+      },
+      layers: [
+        {
+          id: 'osm',
+          type: 'raster',
+          source: 'osm',
+        }
+      ]
+    };
 
 export function MapView() {
   const mapRef = useRef<MapRef>(null);

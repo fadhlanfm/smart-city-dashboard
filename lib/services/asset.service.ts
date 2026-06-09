@@ -101,37 +101,19 @@ export async function getAssetSummary(filters: FilterParamsDTO) {
 }
 
 export async function getAssetGeoJSON(filters: FilterParamsDTO) {
-  const cacheKey = makeCacheKey('assets:geojson', filters as Record<string, unknown>);
-  const cached = await getCache<any>(cacheKey);
-  if (cached) return cached;
-
-  const where: any = {};
-  if (filters.districtId) where.districtId = filters.districtId;
-  if (filters.type) where.type = filters.type;
-  if (filters.status) where.status = filters.status;
-
-  const assets = await prisma.asset.findMany({
-    where,
-    select: { id: true, name: true, type: true, status: true, districtId: true }
-  });
-
-  if (assets.length === 0) {
-    const emptyResult = { type: 'FeatureCollection', features: [] };
-    await setCache(cacheKey, emptyResult, 60);
-    return emptyResult;
-  }
-
-  const assetIds = assets.map(a => a.id);
-  const geometries: any[] = await prisma.$queryRaw`
-    SELECT id, ST_AsGeoJSON(geometry)::json as geometry FROM "Asset" WHERE id IN (${Prisma.join(assetIds)})
-  `;
-  const geoMap = new Map(geometries.map(g => [g.id, g.geometry]));
+  const { mockAssets } = await import('@/lib/mock-data');
+  
+  // Optional: Apply filters to mock data if needed
+  let filtered = mockAssets;
+  if (filters.districtId) filtered = filtered.filter(a => a.districtId === filters.districtId);
+  if (filters.type) filtered = filtered.filter(a => a.type === filters.type);
+  if (filters.status) filtered = filtered.filter(a => a.status === filters.status);
 
   const featureCollection = {
     type: 'FeatureCollection',
-    features: assets.map(a => ({
+    features: filtered.map(a => ({
       type: 'Feature',
-      geometry: geoMap.get(a.id),
+      geometry: a.location,
       properties: {
         id: a.id,
         name: a.name,
@@ -142,7 +124,6 @@ export async function getAssetGeoJSON(filters: FilterParamsDTO) {
     })),
   };
 
-  await setCache(cacheKey, featureCollection, 60);
   return featureCollection;
 }
 

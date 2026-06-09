@@ -1,7 +1,8 @@
-node_modules/
-.git/
-Dockerfile*
+Dockerfile
 .dockerignore
-*.log*
-.env*
-coverage/
+node_modules
+npm-debug.log
+README.md
+.next
+.git
+.env*.local
