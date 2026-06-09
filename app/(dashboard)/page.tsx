@@ -26,7 +26,9 @@ export default async function DashboardPage({
 
   const assetsResponse = await getFilteredAssets(filters);
   const summary = await getAssetSummary(filters);
-  const districts = mockDistricts;
+  const districts = filters.districtId 
+    ? mockDistricts.filter(d => d.id === filters.districtId)
+    : mockDistricts;
 
   const formattedAssets = assetsResponse.data;
 

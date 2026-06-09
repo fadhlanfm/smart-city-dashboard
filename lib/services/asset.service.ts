@@ -48,7 +48,7 @@ export async function getFilteredAssets(filters: FilterParamsDTO): Promise<BaseR
 
 export async function getAssetSummary(filters: FilterParamsDTO) {
   const { getMockSummary } = await import('@/lib/mock-data');
-  return getMockSummary();
+  return getMockSummary(filters);
 }
 
 export async function getAssetGeoJSON(filters: FilterParamsDTO) {

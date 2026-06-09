@@ -75,12 +75,20 @@ export const mockAssets: any[] = Array.from({ length: 300 }).map((_, i) => {
   };
 });
 
-export const getMockSummary = () => {
-  const byType = assetTypes.map(t => ({ type: t, count: BigInt(mockAssets.filter(a => a.type === t).length) }));
-  const byStatus = statuses.map(s => ({ status: s, count: BigInt(mockAssets.filter(a => a.status === s).length) }));
+export const getMockSummary = (filters?: Record<string, any>) => {
+  let filtered = mockAssets;
+  
+  if (filters) {
+    if (filters.districtId) filtered = filtered.filter(a => a.districtId === filters.districtId);
+    if (filters.type) filtered = filtered.filter(a => a.type === filters.type);
+    if (filters.status) filtered = filtered.filter(a => a.status === filters.status);
+  }
+
+  const byType = assetTypes.map(t => ({ type: t, count: BigInt(filtered.filter(a => a.type === t).length) }));
+  const byStatus = statuses.map(s => ({ status: s, count: BigInt(filtered.filter(a => a.status === s).length) }));
   
   return {
-    total: mockAssets.length,
+    total: filtered.length,
     byType,
     byStatus
   };
