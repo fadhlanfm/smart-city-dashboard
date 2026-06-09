@@ -14,6 +14,60 @@ This project was developed rapidly using an **AI-Assisted Development / Vibe Cod
 
 ---
 
+## 📸 Application Gallery & Highlights
+
+### 1. Authentication & Landing Experience
+![Landing & Login](docs/assets/landing.png)
+- **Features**: Secure authentication with Google and Guest modes. Clean, modern entry point that introduces the application's core capabilities.
+- **Tech Stack**: Next.js App Router, NextAuth.js (Auth.js), Tailwind CSS.
+
+### 2. Dashboard & Real-Time Analytics
+![Summary Cards](docs/assets/summary-cards.png)
+![Charts](docs/assets/charts.png)
+- **Features**: Top-level summary cards tracking total assets, incidents, and system health. Interactive charts visualizing asset distribution and incident trends over time.
+- **Tech Stack**: Recharts, Tailwind CSS, Zustand (State Management).
+
+### 3. Advanced Global Search & Filtering
+![Search Autocomplete](docs/assets/search-autocomplete.png)
+![Global Filters](docs/assets/global-filters.png)
+- **Features**: Lightning-fast full-text search with autocomplete dropdown for quick asset lookup. Multi-parameter global filters allowing operations teams to drill down by district, asset type, and status.
+- **Tech Stack**: Elasticsearch (Search), Zod (Validation), React Hook Form.
+
+### 4. Data Management & Table View
+![Asset Directory Table](docs/assets/data-table.png)
+![Pagination](docs/assets/pagination.png)
+![Export Buttons](docs/assets/export-buttons.png)
+- **Features**: High-performance data table with pagination, allowing efficient browsing of massive datasets. Built-in one-click export functions to download data in CSV or GeoJSON formats for external analysis.
+- **Tech Stack**: TanStack Table (React Table), PapaParse (CSV Export), Tailwind CSS.
+
+### 5. Full CRUD Operations & Map Picking
+![Add Asset Modal](docs/assets/add-asset-modal.png)
+![Edit Asset Modal](docs/assets/edit-asset-modal.png)
+![Delete Confirmation](docs/assets/delete-modal.png)
+- **Features**: Intuitive "Add", "Edit", and "Delete" modals for seamless data entry and secure data removal. Features an interactive built-in map picker allowing users to easily pinpoint exact coordinate locations visually on the map rather than typing them manually.
+- **Tech Stack**: React Hook Form, Zod (Schema Validation), MapLibre GL JS, Zustand.
+
+### 6. Interactive Web GIS & Layers
+![Map Layers](docs/assets/map-layers.png)
+![Satellite View](docs/assets/map-satellite.png)
+- **Features**: High-performance vector maps rendering thousands of points without lag. Users can seamlessly toggle between Streets and Satellite base maps, and overlay multiple dynamic data layers such as Asset POIs, Incident Heatmaps, and District Choropleths.
+- **Tech Stack**: MapLibre GL JS, MapTiler, GeoJSON.
+
+### 7. Spatial Analytics (Buffer & Intersect)
+![Buffer Analysis](docs/assets/spatial-buffer.png)
+![Intersect Analysis](docs/assets/spatial-intersect.png)
+- **Features**: Advanced spatial query tools directly in the browser. **Buffer Analysis** allows drawing dynamic radiuses around assets to find nearby entities. **Intersect Analysis** allows clicking anywhere on the map to identify bounding districts and intersecting geometries.
+- **Tech Stack**: Turf.js (Client-side spatial analysis), PostGIS (Backend spatial engine).
+
+### 8. Deep Dive Asset Inspector
+![Map Popup](docs/assets/map-popup.png)
+![Asset Detail - Overview](docs/assets/asset-detail-overview.png)
+![Asset Detail - Docs & Photos](docs/assets/asset-detail-docs.png)
+- **Features**: Clicking an asset on the map or table opens a comprehensive detail modal with tabbed navigation. Users can view rich metadata, historical incident logs, maintenance records, and attached media (photos/PDFs).
+- **Tech Stack**: Radix UI (Tabs/Dialog), Tailwind CSS, Lucide Icons.
+
+---
+
 ## ✨ Complete Feature Showcase
 
 This application is packed with enterprise-grade features, seamlessly integrating a robust data dashboard with advanced Web GIS capabilities.
