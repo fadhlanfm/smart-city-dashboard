@@ -80,10 +80,11 @@ export function Header() {
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
-                    if (e.target.value.length < 3) setIsOpen(false);
+                    if (e.target.value.length > 0) setIsOpen(true);
+                    else setIsOpen(false);
                   }}
                   onFocus={() => {
-                    if (results.length > 0) setIsOpen(true);
+                    if (query.length > 0) setIsOpen(true);
                   }}
                 />
                 {isLoading && (
@@ -93,7 +94,11 @@ export function Header() {
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
               <div className="max-h-[300px] overflow-y-auto p-1">
-                {results.length === 0 ? (
+                {query.length > 0 && query.length < 3 ? (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    Please type at least 3 characters to search...
+                  </div>
+                ) : results.length === 0 ? (
                   <div className="p-4 text-center text-sm text-muted-foreground">
                     No results found.
                   </div>
