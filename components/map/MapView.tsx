@@ -35,7 +35,7 @@ const RASTER_STYLE = MAPTILER_KEY
           source: 'osm',
         }
       ]
-    };
+    } as any;
 
 export function MapView() {
   const mapRef = useRef<MapRef>(null);
