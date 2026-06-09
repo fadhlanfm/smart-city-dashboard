@@ -24,21 +24,8 @@ export default async function DashboardPage({
   let summary: { total: number; byType: any[]; byStatus: any[] } = { total: 0, byType: [], byStatus: [] };
   let districts: District[] = [];
 
-  try {
-    [assetsResponse, summary, districts] = await Promise.all([
-      getFilteredAssets(filters),
-      getAssetSummary(filters),
-      getAllDistricts(),
-    ]);
-  } catch (error) {
-    console.warn('Database unavailable, rendering with empty state:', error);
-  }
-
-
-  const formattedAssets = assetsResponse.data.map((asset: Asset) => ({
-    ...asset,
-    districtName: districts.find((d: District) => d.id === asset.districtId)?.name || asset.districtId
-  }));
+  // Temporary mock data until database is connected
+  const formattedAssets: any[] = [];
 
   // Mock area chart data since we don't have historical incident data yet
   const areaData = [
