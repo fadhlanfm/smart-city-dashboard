@@ -6,9 +6,8 @@ import { FilterParamsDTO } from '../validators/filter.schema';
 import { BaseResponse, ExtendedAsset, CreateAssetDTO, UpdateAssetDTO, IncidentDocument } from '../types';
 
 export async function getFilteredAssets(filters: FilterParamsDTO): Promise<BaseResponse<ExtendedAsset[]>> {
-  const { mockAssets } = await import('@/lib/mock-data');
-  
-  let filtered = mockAssets;
+  const { getMockAssets } = await import('@/lib/mock-data');
+  let filtered = getMockAssets();
   
   if (filters.districtId) filtered = filtered.filter(a => a.districtId === filters.districtId);
   if (filters.type) filtered = filtered.filter(a => a.type === filters.type);
@@ -52,10 +51,10 @@ export async function getAssetSummary(filters: FilterParamsDTO) {
 }
 
 export async function getAssetGeoJSON(filters: FilterParamsDTO) {
-  const { mockAssets } = await import('@/lib/mock-data');
+  const { getMockAssets } = await import('@/lib/mock-data');
+  let filtered = getMockAssets();
   
   // Optional: Apply filters to mock data if needed
-  let filtered = mockAssets;
   if (filters.districtId) filtered = filtered.filter(a => a.districtId === filters.districtId);
   if (filters.type) filtered = filtered.filter(a => a.type === filters.type);
   if (filters.status) filtered = filtered.filter(a => a.status === filters.status);
@@ -79,8 +78,8 @@ export async function getAssetGeoJSON(filters: FilterParamsDTO) {
 }
 
 export async function getAssetDetail(id: string) {
-  const { mockAssets } = await import('@/lib/mock-data');
-  const asset = mockAssets.find(a => a.id === id);
+  const { getMockAssets } = await import('@/lib/mock-data');
+  const asset = getMockAssets().find(a => a.id === id);
   
   if (!asset) return null;
 
@@ -111,7 +110,9 @@ export async function getAssetDetail(id: string) {
 
 export async function createAsset(data: CreateAssetDTO) {
   const { id, name, type, status, districtId, lon, lat, tags } = data;
-  const { mockAssets, mockDistricts } = await import('@/lib/mock-data');
+  const { getMockAssets, saveMockAssets, mockDistricts } = await import('@/lib/mock-data');
+  
+  const mockAssets = getMockAssets();
   const districtName = mockDistricts.find(d => d.id === districtId)?.name || 'Mock District';
   
   const newAsset = {
@@ -120,20 +121,21 @@ export async function createAsset(data: CreateAssetDTO) {
     location: { type: 'Point', coordinates: [lon, lat] },
     geometry: { type: 'Point', coordinates: [lon, lat] },
     district: { id: districtId, name: districtName },
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
 
-  // Mutate mock array to show in table
   mockAssets.unshift(newAsset);
+  saveMockAssets(mockAssets);
 
   return newAsset;
 }
 
 export async function updateAsset(id: string, data: UpdateAssetDTO) {
   const { name, type, status, districtId, lon, lat, tags } = data;
-  const { mockAssets, mockDistricts } = await import('@/lib/mock-data');
+  const { getMockAssets, saveMockAssets, mockDistricts } = await import('@/lib/mock-data');
   
+  const mockAssets = getMockAssets();
   const idx = mockAssets.findIndex(a => a.id === id);
   if (idx !== -1) {
     if (name) mockAssets[idx].name = name;
@@ -146,24 +148,29 @@ export async function updateAsset(id: string, data: UpdateAssetDTO) {
     if (lon !== undefined && lat !== undefined) {
       mockAssets[idx].location = { type: 'Point', coordinates: [lon, lat] };
     }
-    mockAssets[idx].updatedAt = new Date();
+    if (tags) mockAssets[idx].tags = tags;
+    mockAssets[idx].updatedAt = new Date().toISOString();
   }
+
+  saveMockAssets(mockAssets);
 
   const districtName = mockDistricts.find(d => d.id === districtId)?.name || 'Mock District';
   return {
     id, name, type, status, districtId, tags: tags || [],
     geometry: lon !== undefined ? { type: 'Point', coordinates: [lon, lat] } : null,
     district: { id: districtId, name: districtName },
-    createdAt: new Date(),
-    updatedAt: new Date()
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
 }
 
 export async function deleteAsset(id: string) {
-  const { mockAssets } = await import('@/lib/mock-data');
+  const { getMockAssets, saveMockAssets } = await import('@/lib/mock-data');
+  const mockAssets = getMockAssets();
   const idx = mockAssets.findIndex(a => a.id === id);
   if (idx !== -1) {
     mockAssets.splice(idx, 1);
+    saveMockAssets(mockAssets);
   }
   return { success: true };
 }

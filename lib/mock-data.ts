@@ -38,45 +38,70 @@ const statuses = ['ACTIVE', 'INACTIVE', 'MAINTENANCE'];
 // Reset seed before generating assets to guarantee deterministic output across hot reloads/lambdas
 seed = 42;
 
-export const mockAssets: any[] = Array.from({ length: 300 }).map((_, i) => {
-  const district = mockDistricts[Math.floor(random() * mockDistricts.length)];
-  const type = assetTypes[Math.floor(random() * assetTypes.length)];
-  const status = statuses[Math.floor(random() * statuses.length)];
-  const street = streetNames[Math.floor(random() * streetNames.length)];
-  
-  let name = '';
-  let meta = {};
-  
-  if (type === 'CAMERA') {
-    name = `CCTV ${street} - Point ${i + 1}`;
-    meta = { resolution: '4K', brand: random() > 0.5 ? 'Axis' : 'Hikvision', ip: `192.168.1.${i}` };
-  } else if (type === 'STREETLIGHT') {
-    name = `PJU Smart LED ${street} #${i + 1}`;
-    meta = { wattage: '120W', status: 'Online', dimming: Math.floor(random() * 100) };
-  } else if (type === 'PARK') {
-    name = `Taman Kota ${street.replace('Jl. ', '')}`;
-    meta = { area: `${Math.floor(random() * 5000)}m2`, facilities: ['Bench', 'Trash Can'] };
-  } else {
-    name = `${type} Node ${i + 1}`;
-    meta = { vendor: 'SmartCityInc', firmware: 'v2.1.4' };
+import fs from 'fs';
+import path from 'path';
+
+const DB_FILE = path.join(process.cwd(), '.mock-db.json');
+
+export function getMockAssets(): any[] {
+  if (fs.existsSync(DB_FILE)) {
+    try {
+      return JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+    } catch (e) {
+      console.error('Failed to read mock db', e);
+    }
   }
 
-  return {
-    id: `mock-asset-${i}`,
-    name,
-    type,
-    status,
-    location: { type: 'Point', coordinates: generateRandomCoordinates(district.id) },
-    metadata: meta,
-    districtId: district.id,
-    districtName: district.name,
-    createdAt: new Date(1685577600000 - random() * 10000000000), // Static base date
-    updatedAt: new Date(1685577600000 - random() * 10000000),
-  };
-});
+  const generated = Array.from({ length: 300 }).map((_, i) => {
+    const district = mockDistricts[Math.floor(random() * mockDistricts.length)];
+    const type = assetTypes[Math.floor(random() * assetTypes.length)];
+    const status = statuses[Math.floor(random() * statuses.length)];
+    const street = streetNames[Math.floor(random() * streetNames.length)];
+    
+    let name = '';
+    let meta = {};
+    
+    if (type === 'CAMERA') {
+      name = `CCTV ${street} - Point ${i + 1}`;
+      meta = { resolution: '4K', brand: random() > 0.5 ? 'Axis' : 'Hikvision', ip: `192.168.1.${i}` };
+    } else if (type === 'STREETLIGHT') {
+      name = `PJU Smart LED ${street} #${i + 1}`;
+      meta = { wattage: '120W', status: 'Online', dimming: Math.floor(random() * 100) };
+    } else if (type === 'PARK') {
+      name = `Taman Kota ${street.replace('Jl. ', '')}`;
+      meta = { area: `${Math.floor(random() * 5000)}m2`, facilities: ['Bench', 'Trash Can'] };
+    } else {
+      name = `${type} Node ${i + 1}`;
+      meta = { vendor: 'SmartCityInc', firmware: 'v2.1.4' };
+    }
+
+    return {
+      id: `mock-asset-${i}`,
+      name,
+      type,
+      status,
+      location: { type: 'Point', coordinates: generateRandomCoordinates(district.id) },
+      metadata: meta,
+      districtId: district.id,
+      districtName: district.name,
+      createdAt: new Date(1685577600000 - random() * 10000000000).toISOString(),
+      updatedAt: new Date(1685577600000 - random() * 10000000).toISOString(),
+    };
+  });
+
+  fs.writeFileSync(DB_FILE, JSON.stringify(generated, null, 2));
+  return generated;
+}
+
+export function saveMockAssets(assets: any[]) {
+  fs.writeFileSync(DB_FILE, JSON.stringify(assets, null, 2));
+}
+
+// For backwards compatibility where dynamic fetching isn't strictly required
+export const mockAssets = getMockAssets();
 
 export const getMockSummary = (filters?: Record<string, any>) => {
-  let filtered = mockAssets;
+  let filtered = getMockAssets();
   
   if (filters) {
     if (filters.districtId) filtered = filtered.filter(a => a.districtId === filters.districtId);
