@@ -13,9 +13,10 @@ interface DataTableProps<T> {
   data: T[];
   meta: { page: number; pageSize: number; total: number; totalPages: number };
   onPageChange?: (page: number) => void;
+  onRowClick?: (row: T) => void;
 }
 
-export function DataTable<T extends Record<string, unknown>>({ columns, data, meta, onPageChange }: DataTableProps<T>) {
+export function DataTable<T extends Record<string, unknown>>({ columns, data, meta, onPageChange, onRowClick }: DataTableProps<T>) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -49,7 +50,11 @@ export function DataTable<T extends Record<string, unknown>>({ columns, data, me
               </TableRow>
             ) : (
               data.map((row, i) => (
-                <TableRow key={(row.id as string) || i}>
+                <TableRow 
+                  key={(row.id as string) || i}
+                  onClick={() => onRowClick && onRowClick(row)}
+                  className={onRowClick ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""}
+                >
                   {columns.map((col) => (
                     <TableCell key={col.accessorKey}>
                       {col.cell ? col.cell(row) : (row[col.accessorKey] as React.ReactNode)}

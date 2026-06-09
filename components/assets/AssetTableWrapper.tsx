@@ -4,6 +4,7 @@ import React from 'react';
 import { DataTable } from '@/components/dashboard/DataTable';
 import { AssetRowActions } from './AssetRowActions';
 import { ExtendedAsset } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 interface AssetTableWrapperProps {
   data: ExtendedAsset[];
@@ -23,11 +24,14 @@ export function AssetTableWrapper({ data, meta }: AssetTableWrapperProps) {
     { accessorKey: 'actions', header: 'Actions', cell: (row: TableAsset) => <AssetRowActions asset={row} /> },
   ];
 
+  const router = useRouter();
+
   return (
     <DataTable<TableAsset>
       columns={columns} 
       data={tableData} 
       meta={meta}
+      onRowClick={(row) => router.push(`/map?assetId=${row.id}`)}
     />
   );
 }
