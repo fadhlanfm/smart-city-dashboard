@@ -2,18 +2,18 @@ import { z } from 'zod';
 
 const serverSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  AUTH_SECRET: z.string().min(1),
+  AUTH_SECRET: z.string().min(1).optional(),
   AUTH_GOOGLE_ID: z.string().optional(),
   AUTH_GOOGLE_SECRET: z.string().optional(),
-  DATABASE_URL: z.string().url(),
-  MONGODB_URI: z.string().url(),
-  REDIS_URL: z.string().url(),
-  ELASTICSEARCH_URL: z.string().url(),
-  ELASTICSEARCH_INDEX: z.string().min(1),
+  DATABASE_URL: z.string().url().optional(),
+  MONGODB_URI: z.string().url().optional(),
+  REDIS_URL: z.string().url().optional(),
+  ELASTICSEARCH_URL: z.string().url().optional(),
+  ELASTICSEARCH_INDEX: z.string().min(1).optional(),
 });
 
 const clientSchema = z.object({
-  NEXT_PUBLIC_MAPTILER_KEY: z.string().min(1),
+  NEXT_PUBLIC_MAPTILER_KEY: z.string().min(1).optional(),
 });
 
 const processEnv = {
@@ -33,8 +33,8 @@ const parsedServer = serverSchema.safeParse(processEnv);
 const parsedClient = clientSchema.safeParse(processEnv);
 
 if (!parsedServer.success || !parsedClient.success) {
-  console.error(
-    '❌ Invalid environment variables:',
+  console.warn(
+    '⚠️ Some environment variables are missing or invalid:',
     JSON.stringify(
       {
         ...(parsedServer.success ? {} : parsedServer.error.format()),
@@ -44,7 +44,7 @@ if (!parsedServer.success || !parsedClient.success) {
       2
     )
   );
-  throw new Error('Invalid environment variables');
+  // Do NOT throw — let the app boot and fail gracefully at the API level
 }
 
 export const env = {
