@@ -80,7 +80,10 @@ export function MapView() {
       const feature = (assets.features as any[]).find(f => f.properties.id === urlAssetId);
       if (feature && mapRef.current) {
         const [lng, lat] = feature.geometry.coordinates;
-        mapRef.current.flyTo({ center: [lng, lat], zoom: 16, duration: 1500 });
+        // Use a small timeout to ensure the popup rendering doesn't interrupt the map animation
+        setTimeout(() => {
+          mapRef.current?.getMap()?.flyTo({ center: [lng, lat], zoom: 16, duration: 1500, essential: true });
+        }, 50);
       }
     }
   }, [urlAssetId, assets, selectAsset]);
