@@ -128,56 +128,26 @@ export async function getAssetGeoJSON(filters: FilterParamsDTO) {
 }
 
 export async function getAssetDetail(id: string) {
-  const cacheKey = makeCacheKey('asset:detail', { id });
-  const cached = await getCache<ExtendedAsset>(cacheKey);
-  if (cached) return cached;
-
-  const asset = await prisma.asset.findUnique({
-    where: { id },
-    include: {
-      district: {
-        select: { id: true, name: true, code: true }
-      }
-    }
-  });
-
+  const { mockAssets } = await import('@/lib/mock-data');
+  const asset = mockAssets.find(a => a.id === id);
+  
   if (!asset) return null;
-
-  const geometries = await prisma.$queryRaw<{ geometry: string }[]>`
-    SELECT ST_AsGeoJSON(geometry)::json as geometry FROM "Asset" WHERE id = ${id}
-  `;
-
-  // Dynamically import Mongoose model to avoid circular/top-level issues if any
-  const { Incident, connectMongoDB } = require('@/lib/db/mongoose');
-  await connectMongoDB();
-
-  // Fetch recent incidents linked to this asset from MongoDB
-  const recentIncidents = await Incident.find({ assetId: id })
-    .sort({ createdAt: -1 })
-    .limit(5)
-    .lean();
-
-  const { AssetDocument } = require('@/lib/db/mongoose');
-  const doc = await AssetDocument.findOne({ assetId: id }).lean();
 
   const result = {
     ...asset,
-    geometry: geometries[0]?.geometry || null,
-    photos: doc?.photos || [],
-    documents: doc?.documents || [],
-    notes: doc?.notes || [],
-    recentIncidents: recentIncidents.map((i: any) => ({
-      id: i._id.toString(),
-      type: i.type,
-      severity: i.severity,
-      status: i.status,
-      description: i.description,
-      createdAt: i.createdAt
-    }))
+    geometry: asset.location,
+    photos: ['https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800'],
+    documents: [],
+    notes: ['Mock data notes for this asset.'],
+    recentIncidents: [],
+    district: {
+      id: asset.districtId,
+      name: asset.districtName,
+      code: 'BDG'
+    }
   };
 
-  await setCache(cacheKey, result, 30);
-  return result as ExtendedAsset;
+  return result as unknown as ExtendedAsset;
 }
 
 export async function createAsset(data: CreateAssetDTO) {
