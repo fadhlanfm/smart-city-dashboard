@@ -1,6 +1,6 @@
 import { Asset, District } from '@prisma/client';
 
-export const mockDistricts: District[] = [
+export const mockDistricts: any[] = [
   { id: 'bdg-coblong', name: 'Coblong', activeIncidents: 12, geometry: { type: 'Polygon', coordinates: [[[107.608, -6.885], [107.618, -6.885], [107.618, -6.895], [107.608, -6.895], [107.608, -6.885]]] } as any, coverageScore: 85, createdAt: new Date(), updatedAt: new Date() },
   { id: 'bdg-sumur-bandung', name: 'Sumur Bandung', activeIncidents: 4, geometry: { type: 'Polygon', coordinates: [[[107.605, -6.915], [107.615, -6.915], [107.615, -6.925], [107.605, -6.925], [107.605, -6.915]]] } as any, coverageScore: 92, createdAt: new Date(), updatedAt: new Date() },
   { id: 'bdg-andir', name: 'Andir', activeIncidents: 7, geometry: { type: 'Polygon', coordinates: [[[107.585, -6.910], [107.595, -6.910], [107.595, -6.920], [107.585, -6.920], [107.585, -6.910]]] } as any, coverageScore: 78, createdAt: new Date(), updatedAt: new Date() },
