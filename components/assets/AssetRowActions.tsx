@@ -30,6 +30,19 @@ export function AssetRowActions({ asset }: { asset: ExtendedAsset }) {
     try {
       const res = await fetch(`/api/assets/${asset.id}/crud`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete asset');
+      
+      try {
+        const existingStr = localStorage.getItem('mock_new_assets');
+        if (existingStr) {
+          const existing = JSON.parse(existingStr).filter((a: any) => a.id !== asset.id);
+          localStorage.setItem('mock_new_assets', JSON.stringify(existing));
+        }
+        const deletedStr = localStorage.getItem('mock_deleted_assets') || '[]';
+        const deleted = JSON.parse(deletedStr);
+        deleted.push(asset.id);
+        localStorage.setItem('mock_deleted_assets', JSON.stringify(deleted));
+      } catch (e) {}
+
       toast.success('Asset deleted successfully');
       setIsDeleteDialogOpen(false);
       router.refresh();
