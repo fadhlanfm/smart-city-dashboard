@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Map, { Source, Layer, MapRef, MapLayerMouseEvent } from 'react-map-gl/maplibre';
 import type { FillLayerSpecification, CircleLayerSpecification, HeatmapLayerSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -62,11 +63,27 @@ export function MapView() {
     setMapRef(mapRef.current);
   }, [setMapRef]);
 
+  const searchParams = useSearchParams();
+  const urlAssetId = searchParams?.get('assetId');
+
   useEffect(() => {
     fetch('/api/districts/geojson').then(res => res.json()).then(setDistricts);
     fetch('/api/assets/geojson').then(res => res.json()).then(setAssets);
     fetch('/api/incidents/geojson').then(res => res.json()).then(setIncidents);
   }, []);
+
+  // Handle URL parameter selection
+  useEffect(() => {
+    if (urlAssetId && assets && assets.features) {
+      selectAsset(urlAssetId);
+      
+      const feature = (assets.features as any[]).find(f => f.properties.id === urlAssetId);
+      if (feature && mapRef.current) {
+        const [lng, lat] = feature.geometry.coordinates;
+        mapRef.current.flyTo({ center: [lng, lat], zoom: 16, duration: 1500 });
+      }
+    }
+  }, [urlAssetId, assets, selectAsset]);
 
   const choroplethLayer: FillLayerSpecification = {
     id: 'district-choropleth',

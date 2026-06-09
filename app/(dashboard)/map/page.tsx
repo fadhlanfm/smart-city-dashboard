@@ -18,7 +18,9 @@ export default function MapPage() {
       </div>
       
       <div className="flex-1 relative rounded-lg overflow-hidden border shadow-sm">
-        <MapView />
+        <React.Suspense fallback={<div className="w-full h-full flex items-center justify-center">Loading Map...</div>}>
+          <MapView />
+        </React.Suspense>
         
         {/* Floating UI Elements over the map */}
         <div className="absolute top-4 left-4 z-10 flex flex-col gap-4">
