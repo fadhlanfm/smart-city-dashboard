@@ -10,6 +10,7 @@ import { ChartBar } from '@/components/dashboard/ChartBar';
 import { ChartArea } from '@/components/dashboard/ChartArea';
 import { Activity, Box, Map, AlertTriangle } from 'lucide-react';
 import { filterSchema } from '@/lib/validators/filter.schema';
+import type { BaseResponse, ExtendedAsset } from '@/lib/types';
 
 export default async function DashboardPage({
   searchParams,
@@ -19,8 +20,8 @@ export default async function DashboardPage({
   const parsedParams = filterSchema.safeParse(searchParams);
   const filters = parsedParams.success ? parsedParams.data : { page: 1, pageSize: 10, sort: 'updatedAt', order: 'desc' as const };
 
-  let assetsResponse = { data: [], meta: { total: 0, page: 1, pageSize: 10, totalPages: 0 } };
-  let summary = { total: 0, byType: [], byStatus: [] };
+  let assetsResponse: BaseResponse<ExtendedAsset[]> = { data: [], meta: { total: 0, page: 1, pageSize: 10, totalPages: 0 } };
+  let summary: { total: number; byType: any[]; byStatus: any[] } = { total: 0, byType: [], byStatus: [] };
   let districts: District[] = [];
 
   try {
