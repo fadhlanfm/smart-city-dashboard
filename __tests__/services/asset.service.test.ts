@@ -137,10 +137,10 @@ describe('Asset Service', () => {
 
     it('should return cached result if cache hit', async () => {
       const { getCache } = require('@/lib/services/cache.service');
-      (getCache as jest.Mock).mockResolvedValueOnce({ type: 'FeatureCollection', features: [{ id: 'cached' }] });
+      (getCache as jest.Mock).mockResolvedValueOnce({ type: 'FeatureCollection', features: [{ properties: { id: 'cached' } }] });
       
       const result = await getAssetGeoJSON({ page: 1, pageSize: 10, sort: 'name', order: 'asc' });
-      expect(result.features[0].id).toBe('cached');
+      expect((result.features[0] as any).properties.id).toBe('cached');
     });
   });
 
